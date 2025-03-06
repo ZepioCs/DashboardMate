@@ -4,6 +4,10 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write # This is required for creating releases
+  packages: write
+
 jobs:
   release:
     runs-on: ${{ matrix.os }}
@@ -37,6 +41,7 @@ jobs:
 
       - name: Build and release
         env:
+          # This is a special token with more permissions
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           bun run build
