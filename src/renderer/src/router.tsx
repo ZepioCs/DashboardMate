@@ -1,11 +1,4 @@
-import {
-  Outlet,
-  RootRoute,
-  Route,
-  Router as TanStackRouter,
-  RouterProvider,
-  AnyRouter
-} from '@tanstack/react-router'
+import { Outlet, RootRoute, Route, RouterProvider, createRouter } from '@tanstack/react-router'
 import { KanbanBoard } from './components/KanbanBoard'
 import { Settings } from './pages/Settings'
 import { Analytics } from './pages/Analytics'
@@ -14,21 +7,7 @@ import { Toaster } from './components/ui/toaster'
 import { ThemeProvider } from './components/theme-provider'
 import { Button } from './components/ui/button'
 import { AiChat } from './components/AiChat'
-
-// Error component
-function ErrorComponent(): JSX.Element {
-  return (
-    <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold">Oops!</h1>
-        <p className="mt-2 text-muted-foreground">Something went wrong.</p>
-        <Button variant="link" asChild className="mt-4">
-          <a href="/">Go back home</a>
-        </Button>
-      </div>
-    </div>
-  )
-}
+import { useEffect } from 'react'
 
 // Create a root layout route
 function RootLayout(): JSX.Element {
@@ -46,10 +25,27 @@ function RootLayout(): JSX.Element {
   )
 }
 
+// Not Found Component
+function NotFoundComponent(): JSX.Element {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold">Page Not Found</h1>
+        <p className="mt-2 text-muted-foreground">
+          The page you&apos;re looking for doesn&apos;t exist.
+        </p>
+        <Button variant="link" asChild className="mt-4">
+          <a href="/">Go back home</a>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 // Create the root route
 const rootRoute = new RootRoute({
   component: RootLayout,
-  errorComponent: ErrorComponent
+  notFoundComponent: NotFoundComponent
 })
 
 // Create the index route
@@ -77,13 +73,12 @@ const analyticsRoute = new Route({
 const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, analyticsRoute])
 
 // Create the router
-const router = new TanStackRouter({
+const router = createRouter({
   routeTree,
-  defaultPreload: 'intent'
+  defaultPreload: 'intent',
+  notFoundMode: 'root',
+  defaultComponent: KanbanBoard
 })
-
-// Initialize the router
-void router.load()
 
 // Register router for type safety
 declare module '@tanstack/react-router' {
@@ -92,7 +87,15 @@ declare module '@tanstack/react-router' {
   }
 }
 
+// Initialize the router synchronously
+router.load()
+
 // Export the router component
 export function Router(): JSX.Element {
-  return <RouterProvider router={router as AnyRouter} />
+  useEffect(() => {
+    // Ensure we're at the root route on initial load
+    void router.navigate({ to: '/', replace: true })
+  }, [])
+
+  return <RouterProvider router={router} />
 }

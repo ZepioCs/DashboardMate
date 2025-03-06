@@ -23,6 +23,12 @@ win:
     - target: nsis
       arch:
         - x64
+    - target: portable
+      arch:
+        - x64
+    - target: dir
+      arch:
+        - x64
 
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
@@ -30,14 +36,25 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 
+portable:
+  artifactName: ${name}-${version}-portable.${ext}
+
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   icon: build/icon.icns
-  extendedInfo:
+  extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   target:
     - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+    - target: dir
       arch:
         - arm64
         - x64
@@ -50,7 +67,9 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: zepiocs.dev@gmail.com
+    - tar.gz
+    - dir
+  maintainer: graebschsebastian16@gmail.com
   category: Utility
   icon: build/icon.icns
 
