@@ -12,6 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
 
@@ -39,11 +40,31 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-0 libwebkit2gtk-4.0-37 libgbm1
+          sudo apt-get install -y libgtk-3-0 libwebkit2gtk-4.1-0 libgbm1
 
-      - name: Build and release
+      # Build for Windows
+      - name: Build Windows
+        if: matrix.os == 'windows-latest'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           bun run build
-          bun electron-builder --publish always
+          bun electron-builder --windows --publish always
+
+      # Build for macOS
+      - name: Build macOS
+        if: matrix.os == 'macos-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bun run build
+          bun electron-builder --mac --publish always
+
+      # Build for Linux
+      - name: Build Linux
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bun run build
+          bun electron-builder --linux --publish always
