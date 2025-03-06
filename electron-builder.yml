@@ -1,0 +1,62 @@
+appId: com.zepiocs.dashboardmate
+productName: DashboardMate
+copyright: Copyright © 2024 ZepioCs
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.ts'
+  - '!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,bun.lockb,tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{readme.md,README.md,README.MD}'
+
+asar: true
+
+win:
+  executableName: dashboardmate
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+
+mac:
+  entitlementsInherit: build/entitlements.mac.plist
+  icon: build/icon.icns
+  extendedInfo:
+    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+
+dmg:
+  artifactName: ${name}-${version}.${ext}
+
+linux:
+  target:
+    - AppImage
+    - snap
+    - deb
+  maintainer: zepiocs.dev@gmail.com
+  category: Utility
+  icon: build/icon.icns
+
+publish:
+  provider: github
+  owner: ZepioCs
+  repo: DashboardMate
+  private: false
+  releaseType: release
