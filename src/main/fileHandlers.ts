@@ -4,6 +4,7 @@ import { join } from 'path'
 import { homedir } from 'os'
 import log from 'electron-log'
 import { Settings } from '../global_model'
+import { app } from 'electron'
 
 const APP_DATA_PATH = join(homedir(), '.dashboardmate')
 const FILES = {
@@ -51,7 +52,7 @@ export function initFileHandlers(mainWindow: Electron.BrowserWindow): void {
     return {
       appPath: APP_DATA_PATH,
       files: FILES,
-      version: process.env.npm_package_version || '1.0.0',
+      version: app.getVersion(),
       electronVersion: process.versions.electron,
       nodeVersion: process.versions.node,
       platform: process.platform,

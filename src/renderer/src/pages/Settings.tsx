@@ -12,7 +12,8 @@ import {
   RefreshCw,
   Plus,
   HardDrive,
-  Info
+  Info,
+  History
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useStore } from '../stores/StoreProvider'
@@ -21,6 +22,7 @@ import { useToast } from '../components/ui/use-toast'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
 import { Settings as SettingsType, UpdateInfo, AppInfo } from '../../../global_model'
+import { ChangelogDialog } from '../components/ChangelogDialog'
 
 interface Settings {
   notifications: {
@@ -65,6 +67,7 @@ export function Settings(): JSX.Element {
     version: null
   })
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null)
+  const [showChangelog, setShowChangelog] = useState(false)
 
   // Load settings from file on mount
   useEffect(() => {
@@ -342,9 +345,20 @@ export function Settings(): JSX.Element {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>App Information</CardTitle>
-                <CardDescription>Details about your DashboardMate installation</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="space-y-1">
+                  <CardTitle>App Information</CardTitle>
+                  <CardDescription>Details about your DashboardMate installation</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-4"
+                  onClick={() => setShowChangelog(true)}
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  Changelog
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-4">
@@ -598,6 +612,8 @@ export function Settings(): JSX.Element {
           </div>
         </div>
       </div>
+
+      <ChangelogDialog open={showChangelog} onClose={() => setShowChangelog(false)} />
     </div>
   )
 }
