@@ -41,6 +41,10 @@ portable:
 
 mac:
   entitlementsInherit: build/entitlements.mac.plist
+  entitlements: build/entitlements.mac.plist
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  notarize: false
   icon: build/icon.icns
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
