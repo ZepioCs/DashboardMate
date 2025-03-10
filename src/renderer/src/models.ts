@@ -17,5 +17,6 @@ export interface Task {
   dueDate?: string
   createdAt: string
   updatedAt: string
+  completedAt?: string
   notes: TaskNote[]
 }

@@ -114,6 +114,12 @@ export class TaskStore {
     if (task) {
       task.status = newStatus
       task.updatedAt = new Date().toISOString()
+      // Set completedAt when task is moved to done
+      if (newStatus === 'done') {
+        task.completedAt = new Date().toISOString()
+      } else {
+        task.completedAt = undefined // Reset completedAt if moved out of done
+      }
       await this.saveTasks()
     }
   }

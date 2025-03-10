@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { format } from 'date-fns'
-import { Trash2, GripVertical, Calendar, MoreVertical } from 'lucide-react'
+import { Trash2, GripVertical, Calendar, MoreVertical, CheckCircle2 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
 import { Task, TaskStatus } from '../models'
@@ -142,6 +142,12 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 {format(new Date(task.dueDate), 'MMM d')}
+              </span>
+            )}
+            {task.status === 'done' && task.completedAt && (
+              <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                <CheckCircle2 className="h-3 w-3" />
+                Completed {format(new Date(task.completedAt), 'MMM d')}
               </span>
             )}
           </div>

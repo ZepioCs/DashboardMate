@@ -3,7 +3,19 @@ import * as AlertDialog from '@radix-ui/react-alert-dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
-import { X, Calendar, AlertCircle, Trash2 } from 'lucide-react'
+import {
+  X,
+  Calendar,
+  AlertCircle,
+  Trash2,
+  Clock,
+  CheckCircle2,
+  RefreshCw,
+  Hash,
+  ListTodo,
+  Timer,
+  CheckCircle
+} from 'lucide-react'
 import { format } from 'date-fns'
 import { Task, TaskPriority, TaskNote } from '../models'
 import { Badge } from './ui/badge'
@@ -130,6 +142,40 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
   const isNewTask = new Date().getTime() - new Date(task.createdAt).getTime() < 24 * 60 * 60 * 1000
   const notes = task.notes || []
 
+  const getStatusConfig = (
+    status: string
+  ): { icon: React.ElementType; label: string; class: string } => {
+    switch (status) {
+      case 'todo':
+        return {
+          icon: ListTodo,
+          label: 'To Do',
+          class:
+            'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
+        }
+      case 'inProgress':
+        return {
+          icon: Timer,
+          label: 'In Progress',
+          class:
+            'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300'
+        }
+      case 'done':
+        return {
+          icon: CheckCircle,
+          label: 'Done',
+          class:
+            'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300'
+        }
+      default:
+        return {
+          icon: ListTodo,
+          label: status,
+          class: ''
+        }
+    }
+  }
+
   return (
     <Dialog.Root open={open} onOpenChange={handleClose}>
       <Dialog.Portal>
@@ -249,9 +295,19 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
                     >
                       {task.priority} priority
                     </Badge>
-                    <Badge variant="outline" className="capitalize">
-                      Status: {task.status.replace(/([A-Z])/g, ' $1').toLowerCase()}
-                    </Badge>
+                    {((): JSX.Element => {
+                      const statusConfig = getStatusConfig(task.status)
+                      const StatusIcon = statusConfig.icon
+                      return (
+                        <Badge
+                          variant="outline"
+                          className={cn('flex items-center gap-1 capitalize', statusConfig.class)}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {statusConfig.label}
+                        </Badge>
+                      )
+                    })()}
                     {task.dueDate && (
                       <Badge variant="outline" className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -277,18 +333,44 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
 
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">Task Details</h4>
-                    <div className="grid gap-2 text-sm text-muted-foreground">
-                      <div className="flex justify-between">
-                        <span>Created</span>
-                        <span>{format(new Date(task.createdAt), 'PPp')}</span>
+                    <div className="rounded-lg border bg-card/50 divide-y divide-border text-sm">
+                      <div className="flex items-center gap-2 p-2">
+                        <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="flex items-center justify-between flex-1">
+                          <span className="font-medium">Created</span>
+                          <span className="text-muted-foreground">
+                            {format(new Date(task.createdAt), 'PPp')}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Last Updated</span>
-                        <span>{format(new Date(task.updatedAt), 'PPp')}</span>
+                      <div className="flex items-center gap-2 p-2">
+                        <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="flex items-center justify-between flex-1">
+                          <span className="font-medium">Last Updated</span>
+                          <span className="text-muted-foreground">
+                            {format(new Date(task.updatedAt), 'PPp')}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Task ID</span>
-                        <code className="rounded bg-muted px-1 font-mono">{task.id}</code>
+                      {task.completedAt && (
+                        <div className="flex items-center gap-2 p-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-500 dark:text-green-400 shrink-0" />
+                          <div className="flex items-center justify-between flex-1">
+                            <span className="font-medium">Completed</span>
+                            <span className="text-muted-foreground">
+                              {format(new Date(task.completedAt), 'PPp')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 p-2">
+                        <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="flex items-center justify-between flex-1">
+                          <span className="font-medium">Task ID</span>
+                          <code className="font-mono text-muted-foreground text-xs bg-muted/50 px-1.5 py-0.5 rounded">
+                            {task.id}
+                          </code>
+                        </div>
                       </div>
                     </div>
                   </div>
