@@ -46,21 +46,22 @@ mac:
   gatekeeperAssess: false
   notarize: false
   icon: build/icon.icns
+  artifactName: ${name}-${version}-${arch}.${ext}
+  forceCodeSigning: false
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   target:
     - target: dmg
       arch:
-        - arm64
         - x64
+        - arm64
     - target: zip
       arch:
-        - arm64
         - x64
+        - arm64
     - target: dir
       arch:
-        - arm64
         - x64
 
 dmg:
