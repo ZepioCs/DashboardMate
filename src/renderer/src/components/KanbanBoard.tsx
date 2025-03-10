@@ -12,14 +12,25 @@ import {
   useDroppable
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { TaskCard } from './TaskCard'
 import { taskStore } from '../stores/TaskStore'
 import { cn } from '../lib/utils'
 import { AddTaskDialog } from './AddTaskDialog'
 import { ScrollArea } from './ui/scroll-area'
-import { Task, TaskStatus } from '../models'
+import { Task, TaskStatus, TaskPriority } from '../models'
 import { closestCorners } from '@dnd-kit/core'
+import { Input } from './ui/input'
+import { Search, Filter } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Button } from './ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from './ui/dropdown-menu'
 
 const columns: { id: TaskStatus; title: string; color: string }[] = [
   { id: 'todo', title: 'To Do', color: 'border-blue-500/20' },
@@ -30,6 +41,11 @@ const columns: { id: TaskStatus; title: string; color: string }[] = [
 export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [hoveredColumn, setHoveredColumn] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all')
+  const [dueDateFilter, setDueDateFilter] = useState<
+    'all' | 'overdue' | 'today' | 'upcoming' | 'none'
+  >('all')
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -110,12 +126,130 @@ export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
     }
   }
 
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }, [])
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery('')
+    setPriorityFilter('all')
+    setDueDateFilter('all')
+  }, [])
+
+  const getFilteredTasks = useCallback(
+    (status: TaskStatus) => {
+      return taskStore.getTasksByStatus(status).filter((task) => {
+        // Search filter
+        const matchesSearch =
+          searchQuery === '' ||
+          task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          task.description.toLowerCase().includes(searchQuery.toLowerCase())
+
+        // Priority filter
+        const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
+
+        // Due date filter
+        let matchesDueDate = true
+        if (dueDateFilter !== 'all' && task.dueDate) {
+          const dueDate = new Date(task.dueDate)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const tomorrow = new Date(today)
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          const nextWeek = new Date(today)
+          nextWeek.setDate(nextWeek.getDate() + 7)
+
+          switch (dueDateFilter) {
+            case 'overdue':
+              matchesDueDate = dueDate < today
+              break
+            case 'today':
+              matchesDueDate = dueDate >= today && dueDate < tomorrow
+              break
+            case 'upcoming':
+              matchesDueDate = dueDate >= today && dueDate <= nextWeek
+              break
+            case 'none':
+              matchesDueDate = !task.dueDate
+              break
+          }
+        }
+
+        return matchesSearch && matchesPriority && matchesDueDate
+      })
+    },
+    [searchQuery, priorityFilter, dueDateFilter]
+  )
+
   return (
     <div className="flex h-screen flex-col">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 items-center px-6">
           <h1 className="text-xl font-semibold">Tasks</h1>
-          <div className="flex-1" />
+          <div className="flex-1 mx-4 flex items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={handleSearch}
+                className="pl-8"
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="p-2">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Priority</p>
+                      <Select
+                        value={priorityFilter}
+                        onValueChange={(value: TaskPriority | 'all') => setPriorityFilter(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Due Date</p>
+                      <Select
+                        value={dueDateFilter}
+                        onValueChange={(value: 'all' | 'overdue' | 'today' | 'upcoming' | 'none') =>
+                          setDueDateFilter(value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select due date" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="overdue">Overdue</SelectItem>
+                          <SelectItem value="today">Due Today</SelectItem>
+                          <SelectItem value="upcoming">Upcoming (7 days)</SelectItem>
+                          <SelectItem value="none">No Due Date</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={clearFilters}>Clear filters</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <AddTaskDialog />
         </div>
       </header>
@@ -129,7 +263,7 @@ export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
         >
           <div className="grid h-full grid-cols-1 gap-6 md:grid-cols-3">
             {columns.map((column) => {
-              const tasks = taskStore.getTasksByStatus(column.id)
+              const tasks = getFilteredTasks(column.id)
               const { setNodeRef, isOver } = useDroppable({
                 id: `col_${column.id}`
               })
@@ -161,7 +295,9 @@ export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
                               tasks.map((task) => <TaskCard key={task.id} task={task} />)
                             ) : (
                               <div className="flex h-24 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-                                Drop tasks here
+                                {searchQuery || priorityFilter !== 'all' || dueDateFilter !== 'all'
+                                  ? 'No matching tasks'
+                                  : 'Drop tasks here'}
                               </div>
                             )}
                           </SortableContext>

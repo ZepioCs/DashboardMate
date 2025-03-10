@@ -87,6 +87,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.1.1',
+    date: '2025-03-10',
+    title: 'Search & Filter ability',
+    summary: 'This update introduces search and filter ability for tasks.',
+    changes: [
+      {
+        type: 'added',
+        title: 'Search & Filter ability',
+        description: 'Added search and filter ability for tasks',
+        technical_details:
+          "Implemented a search and filter system for tasks. The Filter includes status, priority, and tags. The search is a global search that searches for tasks by name, description, and notes. It's search is case insensitive and supports fuzzy matching.",
+        affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      }
+    ]
+  },
+  {
     version: '1.1.0',
     date: '2025-03-10',
     title: 'Drag & Drop Sorting',
