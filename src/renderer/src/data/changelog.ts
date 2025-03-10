@@ -87,7 +87,7 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
-    version: '1.1.1',
+    version: '1.2.0',
     date: '2025-03-10',
     title: 'Search & Filter ability',
     summary: 'This update introduces search and filter ability for tasks.',
