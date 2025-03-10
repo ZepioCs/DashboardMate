@@ -60,4 +60,4 @@ dist/
 dev-app-update.yml
 
 # Certificates
-*.cer
+certificates/
