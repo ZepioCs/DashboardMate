@@ -59,7 +59,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: |
           bun run build
-          bun electron-builder --mac --x64 --arm64 --publish always
+          bun electron-builder --mac --universal --x64 --arm64 --publish always
 
       # Build for Linux
       - name: Build Linux
