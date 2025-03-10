@@ -44,10 +44,11 @@ mac:
   entitlements: build/entitlements.mac.plist
   hardenedRuntime: true
   gatekeeperAssess: false
-  notarize: false
+  notarize: true
   icon: build/icon.icns
   artifactName: ${name}-${version}-${arch}.${ext}
-  forceCodeSigning: false
+  forceCodeSigning: true
+  identity: null
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.

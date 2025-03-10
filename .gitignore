@@ -58,3 +58,6 @@ yarn-error.log*
 out/
 dist/
 dev-app-update.yml
+
+# Certificates
+*.cer
