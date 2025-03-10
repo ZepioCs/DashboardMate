@@ -20,7 +20,10 @@
     "release": "dotenv -e .env -- cross-env-shell \"bun run build && electron-builder -p always\"",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "lint:watch": "eslint . --ext .js,.jsx,.ts,.tsx --watch"
+    "lint:watch": "eslint . --ext .js,.jsx,.ts,.tsx --watch",
+    "tag:create": "node scripts/git_create_tag.js",
+    "tag:redo": "node scripts/git_redo_tag.js",
+    "tag:delete": "node scripts/git_delete_tag.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
