@@ -1,0 +1,37 @@
+Version Number Convention:
+
+1. MAJOR (1.x.x)
+   - Breaking changes
+   - Incompatible API changes
+   - Complete overhauls of functionality
+   Example: 1.0.0 → 2.0.0
+   - Changing database schema that breaks existing data
+   - Removing or renaming core API endpoints
+   - Major UI redesign that changes core user interactions
+
+2. MINOR (x.1.x)
+   - New features (backward-compatible)
+   - Substantial improvements
+   - Expanded functionality
+   - New capabilities that don't break existing features
+   Example: 1.1.0 → 1.2.0
+   - Adding new task filtering options
+   - Implementing new visualization features
+   - Adding export functionality
+   - New theme options
+
+3. PATCH (x.x.1)
+   - Bug fixes (backward-compatible)
+   - Small optimizations
+   - Minor improvements
+   - Security updates
+   Example: 1.1.1 → 1.1.2
+   - Fixing task drag-and-drop bugs
+   - Correcting calculation errors
+   - Improving error messages
+   - Patching security vulnerabilities
+
+Example: Increment to 1.1.0 when:
+- Adding significant new features
+- Making substantial improvements
+- Adding new functionality without breaking changes

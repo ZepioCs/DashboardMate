@@ -87,6 +87,30 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.1.0',
+    date: '2025-03-10',
+    title: 'Drag & Drop Sorting',
+    summary: 'This update introduces drag & drop sorting for tasks.',
+    changes: [
+      {
+        type: 'fixed',
+        title: 'Task Sorting System',
+        description: 'Fixed issues with task sorting and ordering in lists',
+        technical_details:
+          'Implemented @dnd-kit/core and @dnd-kit/sortable for drag and drop functionality. Added DndContext with closestCorners collision detection. Integrated SortableContext with verticalListSortingStrategy for smooth reordering. Implemented task store methods moveTask() and updateTaskOrder() to handle status changes and reordering persistence.',
+        affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      },
+      {
+        type: 'fixed',
+        title: 'Adjusted Dark Mode Colors for Charts',
+        description: 'Improved chart readability in dark mode',
+        technical_details:
+          'Enhanced Recharts configuration with dynamic color schemes based on theme. Updated chart stroke colors, fill gradients and tooltip styles for better dark mode visibility. Added support for theme-aware grid lines and axis labels.',
+        affected_areas: [AreaType.UI, AreaType.TaskManagement]
+      }
+    ]
+  },
+  {
     version: '1.0.3',
     date: '2025-03-06',
     title: 'Version Display & Changelog Update',
