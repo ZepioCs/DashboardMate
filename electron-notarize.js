@@ -6,6 +6,18 @@ const { exec } = require('child_process')
 const util = require('util')
 const execAsync = util.promisify(exec)
 
+async function verifyCodeSigning(appPath) {
+  try {
+    console.log('Verifying code signing...')
+    const { stdout } = await execAsync(`codesign -vv --deep --strict "${appPath}"`)
+    console.log('Code signing verification successful:', stdout)
+    return true
+  } catch (error) {
+    console.error('Code signing verification failed:', error.message)
+    return false
+  }
+}
+
 async function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -14,6 +26,7 @@ async function zipApp(appPath) {
   const zipPath = appPath.replace('.app', '.zip')
   console.log('Creating ZIP archive...')
   await execAsync(`ditto -c -k --keepParent "${appPath}" "${zipPath}"`)
+  console.log('ZIP archive created successfully.')
   return zipPath
 }
 
@@ -21,7 +34,9 @@ async function unzipApp(zipPath) {
   const targetDir = path.dirname(zipPath)
   console.log('Extracting ZIP archive...')
   await execAsync(`ditto -x -k "${zipPath}" "${targetDir}"`)
+  console.log('ZIP archive extracted successfully.')
   await fs.promises.unlink(zipPath)
+  console.log('ZIP archive deleted successfully.')
 }
 
 async function notarizeMacos(context) {
@@ -43,6 +58,14 @@ async function notarizeMacos(context) {
 
   const appName = context.packager.appInfo.productFilename
   const appPath = `${appOutDir}/${appName}.app`
+
+  // Verify code signing before attempting notarization
+  const isCodeSigned = await verifyCodeSigning(appPath)
+  if (!isCodeSigned) {
+    throw new Error(
+      'Application must be code signed before notarization. Please ensure proper code signing is completed first.'
+    )
+  }
 
   console.log('Starting macOS app notarization...')
 
