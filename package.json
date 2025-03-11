@@ -112,23 +112,12 @@
         "dmg",
         "zip"
       ],
+      "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "provisioningProfile": null,
-      "darkModeSupport": true,
-      "category": "public.app-category.productivity",
-      "electronUpdaterCompatibility": ">=2.15",
-      "notarize": {
-        "teamId": "${APPLE_TEAM_ID}"
-      },
-      "extendInfo": {
-        "NSMicrophoneUsageDescription": "Please give us access to your microphone",
-        "NSCameraUsageDescription": "Please give us access to your camera",
-        "NSDocumentsFolderUsageDescription": "Application requires access to the documents folder.",
-        "NSDownloadsFolderUsageDescription": "Application requires access to the downloads folder."
-      }
+      "provisioningProfile": null
     },
     "linux": {
       "target": [
