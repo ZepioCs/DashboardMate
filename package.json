@@ -112,17 +112,19 @@
         "dmg",
         "zip"
       ],
+      "forceCodeSigning": true,
       "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "provisioningProfile": null
+      "notarize": false
     },
     "linux": {
       "target": [
         "AppImage"
       ]
-    }
+    },
+    "afterSign": "electron-notarize.js"
   }
 }
