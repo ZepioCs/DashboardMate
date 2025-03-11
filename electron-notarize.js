@@ -1,5 +1,28 @@
 require('dotenv').config()
 const { notarize } = require('@electron/notarize')
+const fs = require('fs')
+const path = require('path')
+const { exec } = require('child_process')
+const util = require('util')
+const execAsync = util.promisify(exec)
+
+async function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function zipApp(appPath) {
+  const zipPath = appPath.replace('.app', '.zip')
+  console.log('Creating ZIP archive...')
+  await execAsync(`ditto -c -k --keepParent "${appPath}" "${zipPath}"`)
+  return zipPath
+}
+
+async function unzipApp(zipPath) {
+  const targetDir = path.dirname(zipPath)
+  console.log('Extracting ZIP archive...')
+  await execAsync(`ditto -x -k "${zipPath}" "${targetDir}"`)
+  await fs.promises.unlink(zipPath)
+}
 
 async function notarizeMacos(context) {
   const { appOutDir } = context
@@ -19,15 +42,50 @@ async function notarizeMacos(context) {
   }
 
   const appName = context.packager.appInfo.productFilename
+  const appPath = `${appOutDir}/${appName}.app`
 
-  console.log('Notarizing macOS app...')
-  await notarize({
-    appBundleId: 'com.zepiocs.apps',
-    appPath: `${appOutDir}/${appName}.app`,
-    appleId: APPLE_ID,
-    appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD,
-    teamId: APPLE_TEAM_ID
-  })
+  console.log('Starting macOS app notarization...')
+
+  const maxAttempts = 3
+  let attempt = 0
+  let zipPath
+
+  while (attempt < maxAttempts) {
+    try {
+      attempt++
+      console.log(`Notarization attempt ${attempt} of ${maxAttempts}...`)
+
+      zipPath = await zipApp(appPath)
+      console.log('ZIP created successfully, starting notarization...')
+
+      await notarize({
+        appBundleId: 'com.zepiocs.apps',
+        appPath: zipPath,
+        appleId: APPLE_ID,
+        appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD,
+        teamId: APPLE_TEAM_ID,
+        tool: 'notarytool'
+      })
+
+      await unzipApp(zipPath)
+
+      console.log('Notarization completed successfully!')
+      return
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed:`, error)
+
+      if (zipPath && fs.existsSync(zipPath)) {
+        await fs.promises.unlink(zipPath).catch(console.error)
+      }
+
+      if (attempt === maxAttempts) {
+        throw new Error(`Notarization failed after ${maxAttempts} attempts: ${error.message}`)
+      }
+
+      console.log('Waiting 30 seconds before next attempt...')
+      await wait(30000)
+    }
+  }
 }
 
 exports.default = async function notarizeOrSign(context) {
