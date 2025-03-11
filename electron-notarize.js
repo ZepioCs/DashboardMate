@@ -24,9 +24,20 @@ async function wait(ms) {
 
 async function zipApp(appPath) {
   const zipPath = appPath.replace('.app', '.zip')
-  console.log('Creating ZIP archive...')
-  await execAsync(`ditto -c -k --keepParent "${appPath}" "${zipPath}"`)
+  console.log('Creating ZIP archive with preserved code signing...')
+  await execAsync(`ditto -c -k --rsrc --preserveParent "${appPath}" "${zipPath}"`)
   console.log('ZIP archive created successfully.')
+
+  // Verify the zip file's code signing
+  try {
+    console.log('Verifying ZIP archive code signing...')
+    const { stdout } = await execAsync(`codesign -vv --deep --strict "${zipPath}"`)
+    console.log('ZIP archive code signing verification successful:', stdout)
+  } catch (error) {
+    console.error('ZIP archive code signing verification failed:', error.message)
+    throw new Error(`ZIP archive code signing verification failed: ${error.message}`)
+  }
+
   return zipPath
 }
 

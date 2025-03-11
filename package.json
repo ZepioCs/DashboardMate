@@ -118,7 +118,11 @@
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "notarize": false
+      "notarize": false,
+      "signIgnore": [
+        "node_modules/**/*"
+      ],
+      "darkModeSupport": true
     },
     "linux": {
       "target": [
