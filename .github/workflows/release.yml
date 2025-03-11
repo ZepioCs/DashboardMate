@@ -62,7 +62,11 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          DEBUG: electron-builder,electron-builder:*
         run: |
+          echo "Starting macOS build..."
+          echo "Certificate exists: $([[ ! -z "$CSC_LINK" ]] && echo "Yes" || echo "No")"
+          echo "Password exists: $([[ ! -z "$CSC_KEY_PASSWORD" ]] && echo "Yes" || echo "No")"
           bun run build
           bun electron-builder --mac --universal --x64 --arm64 --publish always
 
