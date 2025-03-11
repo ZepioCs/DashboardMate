@@ -26,7 +26,8 @@ async function notarizeMacos(context) {
     appPath: `${appOutDir}/${appName}.app`,
     appleId: APPLE_ID,
     appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD,
-    teamId: APPLE_TEAM_ID
+    teamId: APPLE_TEAM_ID,
+    verbose: true
   })
 }
 
