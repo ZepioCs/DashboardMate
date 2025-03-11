@@ -15,6 +15,7 @@ exports.default = async function notarizing(context) {
     await notarize({
       tool: 'notarytool',
       appPath,
+      appBundleId: 'com.zepiocs.dashboardmate',
       teamId: process.env.APPLE_TEAM_ID,
       appleId: process.env.APPLE_ID,
       appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD
