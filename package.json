@@ -119,9 +119,6 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "notarize": false,
-      "signIgnore": [
-        "**/node_modules/**"
-      ],
       "darkModeSupport": true
     },
     "linux": {
@@ -129,10 +126,6 @@
         "AppImage"
       ]
     },
-    "afterSign": "electron-notarize.js",
-    "directories": {
-      "output": "dist",
-      "buildResources": "build"
-    }
+    "afterSign": "electron-notarize.js"
   }
 }
