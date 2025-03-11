@@ -120,6 +120,9 @@
       "darkModeSupport": true,
       "category": "public.app-category.productivity",
       "electronUpdaterCompatibility": ">=2.15",
+      "notarize": {
+        "teamId": "${APPLE_TEAM_ID}"
+      },
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Please give us access to your microphone",
         "NSCameraUsageDescription": "Please give us access to your camera",
@@ -131,7 +134,6 @@
       "target": [
         "AppImage"
       ]
-    },
-    "afterSign": "scripts/notarize.js"
+    }
   }
 }
