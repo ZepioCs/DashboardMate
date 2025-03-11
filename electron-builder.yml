@@ -56,9 +56,9 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   target:
     - target: dmg
-      arch: [x64, arm64, universal]
+      arch: [universal]
     - target: zip
-      arch: [x64, arm64, universal]
+      arch: [universal]
 
 dmg:
   artifactName: ${name}-${version}.${ext}
