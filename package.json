@@ -67,6 +67,7 @@
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
     "@electron-toolkit/eslint-config-ts": "^2.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@electron/notarize": "^2.5.0",
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -113,15 +114,24 @@
       ],
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "notarize": true,
-      "notarizeOptions": {
-        "teamId": "${APPLE_TEAM_ID}"
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "provisioningProfile": null,
+      "darkModeSupport": true,
+      "category": "public.app-category.productivity",
+      "electronUpdaterCompatibility": ">=2.15",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Please give us access to your microphone",
+        "NSCameraUsageDescription": "Please give us access to your camera",
+        "NSDocumentsFolderUsageDescription": "Application requires access to the documents folder.",
+        "NSDownloadsFolderUsageDescription": "Application requires access to the downloads folder."
       }
     },
     "linux": {
       "target": [
         "AppImage"
       ]
-    }
+    },
+    "afterSign": "scripts/notarize.js"
   }
 }

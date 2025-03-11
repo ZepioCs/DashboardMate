@@ -11,7 +11,7 @@ jobs:
       packages: write
     runs-on: ${{ matrix.os }}
     environment: Production
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -27,14 +27,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
+          cache: 'npm'
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
+          cache: true
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       # Install required dependencies for Linux builds
       - name: Install Linux dependencies
@@ -42,15 +44,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libwebkit2gtk-4.1-0 libgbm1
-
-      # Build for Windows
-      - name: Build Windows
-        if: matrix.os == 'windows-latest'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          bun run build
-          bun electron-builder --windows --publish always
 
       # Setup macOS signing
       - name: Install Apple codesigning certificates
@@ -75,29 +68,27 @@ jobs:
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-      # Build for macOS
-      - name: Build macOS
-        if: matrix.os == 'macos-latest'
+      # Platform-specific builds
+      - name: Build and Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         run: |
-          bun run build
-          bun electron-builder --mac --universal --x64 --arm64 --publish always
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            bun run build:win
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            bun run build:mac
+          else
+            bun run build:linux
+          fi
+        shell: bash
 
       # Cleanup keychain
       - name: Clean up keychain
         if: matrix.os == 'macos-latest' && always()
         run: |
           security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-
-      # Build for Linux
-      - name: Build Linux
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          bun run build
-          bun electron-builder --linux --publish always
