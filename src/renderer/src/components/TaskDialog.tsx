@@ -43,6 +43,7 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
   const [newNote, setNewNote] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editingNoteContent, setEditingNoteContent] = useState('')
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null)
 
   // Reset form state when task changes
   useEffect(() => {
@@ -365,9 +366,9 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
                       )}
                       <div className="flex items-center gap-2 p-2">
                         <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <div className="flex items-center justify-between flex-1">
+                        <div className="flex items-center justify-between flex-1 min-w-0">
                           <span className="font-medium">Task ID</span>
-                          <code className="font-mono text-muted-foreground text-xs bg-muted/50 px-1.5 py-0.5 rounded">
+                          <code className="font-mono text-muted-foreground text-xs bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[200px] hover:max-w-full transition-all duration-300 overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
                             {task.id}
                           </code>
                         </div>
@@ -394,7 +395,7 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
                   Add Note
                 </Button>
               </form>
-              <div className="h-[400px] rounded-md border p-4">
+              <div className="h-[400px] rounded-md border p-4 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
                 <div className="space-y-4">
                   {notes.length === 0 ? (
                     <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
@@ -412,11 +413,19 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
                           </div>
                           {editingNoteId === note.id ? (
                             <div className="space-y-2">
-                              <Input
-                                value={editingNoteContent}
-                                onChange={(e) => setEditingNoteContent(e.target.value)}
-                                className="w-full"
-                              />
+                              <div className="relative rounded-md border bg-muted/30">
+                                <textarea
+                                  value={editingNoteContent}
+                                  onChange={(e) => setEditingNoteContent(e.target.value)}
+                                  placeholder="Enter note content..."
+                                  className={cn(
+                                    'w-full min-h-[100px] max-h-[300px] p-2 text-sm resize-y',
+                                    'bg-transparent focus-visible:outline-none',
+                                    'scrollbar-thin scrollbar-track-transparent',
+                                    'scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30'
+                                  )}
+                                />
+                              </div>
                               <div className="flex justify-end gap-2">
                                 <Button variant="outline" size="sm" onClick={handleCancelEditNote}>
                                   Cancel
@@ -431,7 +440,32 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
                               </div>
                             </div>
                           ) : (
-                            <div className="text-sm">{note.content}</div>
+                            <div
+                              className="relative bg-muted/30 rounded-md cursor-pointer"
+                              onClick={() =>
+                                setExpandedNoteId(expandedNoteId === note.id ? null : note.id)
+                              }
+                            >
+                              <div
+                                className={cn(
+                                  'text-sm p-2 break-words whitespace-pre-wrap',
+                                  'overflow-y-auto transition-all duration-300',
+                                  expandedNoteId === note.id ? 'max-h-[300px]' : 'max-h-[100px]',
+                                  'scrollbar-thin scrollbar-track-transparent',
+                                  'scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30'
+                                )}
+                              >
+                                {note.content}
+                              </div>
+                              <div
+                                className={cn(
+                                  'absolute bottom-0 left-0 right-0 h-6',
+                                  'bg-gradient-to-t from-background/80 to-transparent',
+                                  'pointer-events-none transition-opacity',
+                                  expandedNoteId === note.id ? 'opacity-0' : 'opacity-100'
+                                )}
+                              />
+                            </div>
                           )}
                           <div className="absolute right-0 top-0 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                             {!editingNoteId && (

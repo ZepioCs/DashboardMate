@@ -89,7 +89,7 @@ export const changelog: ChangelogEntry[] = [
   {
     version: '1.2.0',
     date: '2025-03-10',
-    title: 'Search & Filter ability',
+    title: 'Search/Filter & Task Notes',
     summary: 'This update introduces search and filter ability for tasks.',
     changes: [
       {
@@ -99,6 +99,14 @@ export const changelog: ChangelogEntry[] = [
         technical_details:
           "Implemented a search and filter system for tasks. The Filter includes status, priority, and tags. The search is a global search that searches for tasks by name, description, and notes. It's search is case insensitive and supports fuzzy matching.",
         affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      },
+      {
+        type: 'added',
+        title: 'Task Notes',
+        description: 'Added notes to tasks',
+        technical_details:
+          'Changed note input to use a textarea element with automatic height expansion and custom scroll behavior for better editing experience.',
+        affected_areas: [AreaType.TaskManagement]
       }
     ]
   },
