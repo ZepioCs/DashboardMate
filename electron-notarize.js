@@ -3,7 +3,7 @@ const { notarize } = require('@electron/notarize')
 
 async function notarizeMacos(context) {
   const { appOutDir } = context
-  const { APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID } = process.env
+  const { APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID, SKIP_NOTARIZE } = process.env
 
   if (!(APPLE_ID && APPLE_APP_SPECIFIC_PASSWORD && APPLE_TEAM_ID)) {
     console.log(
@@ -12,7 +12,9 @@ async function notarizeMacos(context) {
     return
   }
 
-  if (process.env.SKIP_NOTARIZE !== undefined) {
+  console.log('SKIP_NOTARIZE', SKIP_NOTARIZE)
+
+  if (SKIP_NOTARIZE !== undefined) {
     console.warn('Skipping notarizing step. SKIP_NOTARIZE env variable is set.')
     return
   }
