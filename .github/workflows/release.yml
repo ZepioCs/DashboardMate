@@ -78,7 +78,19 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             bun run build:win
           elif [ "$RUNNER_OS" == "macOS" ]; then
+            # Build signed version
             bun run build:mac
+            mv dist/**.dmg dist/$(basename dist/**.dmg .dmg)_signed.dmg
+
+            # Build unsigned version
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+            mv dist dist-signed
+            mkdir dist
+            bun run build:mac
+            mv dist/**.dmg dist/$(basename dist/**.dmg .dmg)_unsigned.dmg
+
+            # Move signed version back
+            mv dist-signed/**.dmg dist/
           else
             bun run build:linux
           fi
