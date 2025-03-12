@@ -23,6 +23,7 @@ import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
 import { Settings as SettingsType, UpdateInfo, AppInfo } from '../../../global_model'
 import { ChangelogDialog } from '../components/ChangelogDialog'
+import { observer } from 'mobx-react-lite'
 
 interface Settings {
   notifications: {
@@ -42,7 +43,7 @@ const handleError = (error: unknown, context: string): string => {
   return 'An unexpected error occurred'
 }
 
-export function Settings(): JSX.Element {
+export const Settings = observer(function Settings(): JSX.Element {
   const { taskStore } = useStore()
   const { toast } = useToast()
   const [settings, setSettings] = useState<SettingsType>(() => ({
@@ -616,4 +617,4 @@ export function Settings(): JSX.Element {
       <ChangelogDialog open={showChangelog} onClose={() => setShowChangelog(false)} />
     </div>
   )
-}
+})

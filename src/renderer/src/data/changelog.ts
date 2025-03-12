@@ -89,9 +89,35 @@ export const changelog: ChangelogEntry[] = [
   {
     version: '1.2.0',
     date: '2025-03-10',
-    title: 'Search/Filter & Task Notes',
-    summary: 'This update introduces search and filter ability for tasks.',
+    title: 'Advanced Task Management & Search',
+    summary: 'This update introduces powerful scheduling, search and task management features.',
     changes: [
+      {
+        type: 'added',
+        title: 'Advanced Task Scheduling',
+        description:
+          'Introduced a powerful new scheduling system with drag-and-drop functionality and multiple sorting modes',
+        technical_details:
+          'Implemented using @dnd-kit/core for drag-and-drop, with support for both priority-based and custom ordering. Added automatic time adjustments within priority groups and manual time adjustment capabilities. Enhanced with visual feedback during drag operations.',
+        affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      },
+      {
+        type: 'changed',
+        title: 'Schedule UI Overhaul',
+        description:
+          'Completely redesigned schedule interface with improved visual hierarchy and mobile responsiveness',
+        technical_details:
+          'Enhanced task cards with priority-based color coding, improved accessibility for drag interactions, and optimized grid layout for both desktop and mobile views. Added toggle between priority and custom sorting modes.',
+        affected_areas: [AreaType.UI]
+      },
+      {
+        type: 'added',
+        title: 'Time Management Features',
+        description: 'Added smart time management with automatic and manual time adjustments',
+        technical_details:
+          'Implemented intelligent time slot management that maintains time order within priority groups while allowing manual overrides. Added visual indicators for drag targets and improved time slot allocation logic.',
+        affected_areas: [AreaType.TaskManagement]
+      },
       {
         type: 'added',
         title: 'Search & Filter ability',

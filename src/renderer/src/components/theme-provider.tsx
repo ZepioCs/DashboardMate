@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { observer } from 'mobx-react-lite'
 
 type Theme = 'dark' | 'light' | 'system'
 
@@ -20,7 +21,7 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
-export function ThemeProvider({
+export const ThemeProvider = observer(function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = 'vite-ui-theme',
@@ -60,7 +61,7 @@ export function ThemeProvider({
       {children}
     </ThemeProviderContext.Provider>
   )
-}
+})
 
 export const useTheme = (): ThemeProviderState => {
   const context = useContext(ThemeProviderContext)

@@ -1,10 +1,11 @@
-import { LayoutGrid, Settings, Menu, BarChart } from 'lucide-react'
+import { LayoutGrid, Settings, Menu, BarChart, Calendar } from 'lucide-react'
 import { Link, useMatches } from '@tanstack/react-router'
 import { cn } from '../lib/utils'
 import { Button } from './ui/button'
 import { useEffect, useState } from 'react'
+import { observer } from 'mobx-react-lite'
 
-export function Sidebar(): JSX.Element {
+export const Sidebar = observer(function Sidebar(): JSX.Element {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
     return saved ? JSON.parse(saved) : false
@@ -55,6 +56,20 @@ export function Sidebar(): JSX.Element {
             className={cn(
               'w-full justify-start gap-3 px-3 py-2',
               isCollapsed && 'justify-center px-2',
+              currentPath === '/schedule' && 'bg-muted'
+            )}
+            asChild
+          >
+            <Link to="/schedule">
+              <Calendar className="h-5 w-5" />
+              {!isCollapsed && <span>Schedule</span>}
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            className={cn(
+              'w-full justify-start gap-3 px-3 py-2',
+              isCollapsed && 'justify-center px-2',
               currentPath === '/analytics' && 'bg-muted'
             )}
             asChild
@@ -86,4 +101,4 @@ export function Sidebar(): JSX.Element {
       </div>
     </div>
   )
-}
+})

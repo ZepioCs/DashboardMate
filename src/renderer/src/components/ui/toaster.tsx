@@ -7,8 +7,9 @@ import {
   ToastViewport
 } from './toast'
 import { useToast } from './use-toast'
+import { observer } from 'mobx-react-lite'
 
-export function Toaster(): JSX.Element {
+export const Toaster = observer(function Toaster(): JSX.Element {
   const { toasts } = useToast()
 
   return (
@@ -28,4 +29,4 @@ export function Toaster(): JSX.Element {
       <ToastViewport />
     </ToastProvider>
   )
-}
+})

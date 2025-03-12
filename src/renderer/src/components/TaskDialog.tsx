@@ -20,21 +20,32 @@ import { format } from 'date-fns'
 import { Task, TaskPriority, TaskNote } from '../models'
 import { Badge } from './ui/badge'
 import { cn } from '../lib/utils'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, createContext, useContext } from 'react'
 import { useStore } from '../stores/StoreProvider'
 import { DateTimePicker } from './ui/date-time-picker'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
+import { observer } from 'mobx-react-lite'
 
 interface TaskDialogProps {
   task: Task | undefined
   onClose: () => void
   open: boolean
+  onManualTimeAdjust?: (taskId: string) => void
 }
 
-export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Element | null {
+// Create a context for force updates
+export const ForceUpdateContext = createContext<(() => void) | null>(null)
+
+export const TaskDialog = observer(function TaskDialog({
+  task,
+  onClose,
+  open,
+  onManualTimeAdjust
+}: TaskDialogProps): JSX.Element | null {
   const { taskStore } = useStore()
   const { toast } = useToast()
+  const forceUpdate = useContext(ForceUpdateContext)
   const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -80,17 +91,25 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
     onClose()
   }, [onClose])
 
-  const handleSave = useCallback((): void => {
-    if (!task || !title.trim()) return
+  const handleSave = async (): Promise<void> => {
+    if (!task) return
 
-    taskStore.updateTask(task.id, {
-      title: title.trim(),
+    const updates: Partial<Task> = {
+      title,
       description,
-      priority,
-      dueDate: dueDateTime?.toISOString()
-    })
+      priority
+    }
+
+    if (dueDateTime) {
+      updates.dueDate = dueDateTime.toISOString()
+      // Mark this as a manual time adjustment
+      onManualTimeAdjust?.(task.id)
+    }
+
+    await taskStore.updateTask(task.id, updates)
+    forceUpdate?.()
     setIsEditing(false)
-  }, [task, taskStore, title, description, priority, dueDateTime])
+  }
 
   const handleAddNote = useCallback(
     (e: React.FormEvent): void => {
@@ -102,22 +121,26 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
         task.notes = []
       }
 
-      taskStore.addNote(task.id, newNote.trim())
-      setNewNote('')
+      taskStore.addNote(task.id, newNote.trim()).then(() => {
+        forceUpdate?.()
+        setNewNote('')
+      })
     },
-    [task, newNote, taskStore]
+    [task, newNote, taskStore, forceUpdate]
   )
 
   const handleDeleteNote = useCallback(
     (noteId: string): void => {
       if (!task) return
-      taskStore.deleteNote(task.id, noteId)
-      toast({
-        title: 'Note deleted',
-        description: 'The note has been successfully deleted.'
+      taskStore.deleteNote(task.id, noteId).then(() => {
+        forceUpdate?.()
+        toast({
+          title: 'Note deleted',
+          description: 'The note has been successfully deleted.'
+        })
       })
     },
-    [task, taskStore, toast]
+    [task, taskStore, toast, forceUpdate]
   )
 
   const handleEditNote = useCallback((note: TaskNote): void => {
@@ -127,10 +150,12 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
 
   const handleSaveNote = useCallback((): void => {
     if (!task || !editingNoteId || !editingNoteContent.trim()) return
-    taskStore.updateNote(task.id, editingNoteId, editingNoteContent.trim())
-    setEditingNoteId(null)
-    setEditingNoteContent('')
-  }, [task, editingNoteId, editingNoteContent, taskStore])
+    taskStore.updateNote(task.id, editingNoteId, editingNoteContent.trim()).then(() => {
+      forceUpdate?.()
+      setEditingNoteId(null)
+      setEditingNoteContent('')
+    })
+  }, [task, editingNoteId, editingNoteContent, taskStore, forceUpdate])
 
   const handleCancelEditNote = useCallback((): void => {
     setEditingNoteId(null)
@@ -535,4 +560,4 @@ export function TaskDialog({ task, onClose, open }: TaskDialogProps): JSX.Elemen
       </Dialog.Portal>
     </Dialog.Root>
   )
-}
+})
