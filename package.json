@@ -112,14 +112,14 @@
         "dmg",
         "zip"
       ],
-      "forceCodeSigning": true,
-      "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "notarize": false,
-      "darkModeSupport": true
+      "darkModeSupport": true,
+      "identity": null,
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": [
