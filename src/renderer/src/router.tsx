@@ -2,6 +2,8 @@ import { Outlet, RootRoute, Route, RouterProvider, createRouter } from '@tanstac
 import { KanbanBoard } from './components/KanbanBoard'
 import { Settings } from './pages/Settings'
 import { Analytics } from './pages/Analytics'
+import Schedule from './components/Schedule'
+import { Archive } from './pages/Archive'
 import { Sidebar } from './components/Sidebar'
 import { Toaster } from './components/ui/toaster'
 import { ThemeProvider } from './components/theme-provider'
@@ -62,6 +64,13 @@ const settingsRoute = new Route({
   component: Settings
 })
 
+// Create the schedule route
+const scheduleRoute = new Route({
+  getParentRoute: (): typeof rootRoute => rootRoute,
+  path: '/schedule',
+  component: Schedule
+})
+
 // Create the analytics route
 const analyticsRoute = new Route({
   getParentRoute: (): typeof rootRoute => rootRoute,
@@ -69,8 +78,21 @@ const analyticsRoute = new Route({
   component: Analytics
 })
 
+// Create the archive route
+const archiveRoute = new Route({
+  getParentRoute: (): typeof rootRoute => rootRoute,
+  path: '/archive',
+  component: Archive
+})
+
 // Create the route tree
-const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, analyticsRoute])
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  settingsRoute,
+  analyticsRoute,
+  scheduleRoute,
+  archiveRoute
+])
 
 // Create the router
 const router = createRouter({

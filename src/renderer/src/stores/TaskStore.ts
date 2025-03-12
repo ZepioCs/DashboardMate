@@ -8,6 +8,7 @@ export class TaskStore {
   constructor() {
     makeAutoObservable(this)
     this.loadTasks()
+    this.setupAutoArchive()
   }
 
   private async loadTasks(): Promise<void> {
@@ -166,6 +167,63 @@ export class TaskStore {
       console.error('Failed to import tasks:', error)
       throw error
     }
+  }
+
+  private setupAutoArchive(): void {
+    // Check for tasks to archive every hour
+    setInterval(
+      () => {
+        this.autoArchiveTasks()
+      },
+      60 * 60 * 1000
+    )
+    // Run initial check
+    this.autoArchiveTasks()
+  }
+
+  private async autoArchiveTasks(): Promise<void> {
+    const oneWeekAgo = new Date()
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+
+    let hasChanges = false
+    this.tasks.forEach((task) => {
+      if (
+        task.status === 'done' &&
+        task.completedAt &&
+        new Date(task.completedAt) < oneWeekAgo &&
+        !task.archivedAt
+      ) {
+        task.status = 'archived'
+        task.archivedAt = new Date().toISOString()
+        hasChanges = true
+      }
+    })
+
+    if (hasChanges) {
+      await this.saveTasks()
+    }
+  }
+
+  async archiveTask(taskId: string): Promise<void> {
+    const task = this.tasks.find((t) => t.id === taskId)
+    if (task) {
+      task.status = 'archived'
+      task.archivedAt = new Date().toISOString()
+      await this.saveTasks()
+    }
+  }
+
+  async unarchiveTask(taskId: string): Promise<void> {
+    const task = this.tasks.find((t) => t.id === taskId)
+    if (task && task.status === 'archived') {
+      task.status = task.completedAt ? 'done' : 'todo'
+      task.archivedAt = undefined
+      await this.saveTasks()
+    }
+  }
+
+  getArchivedTasks(): Task[] {
+    return this.tasks.filter((task) => task.status === 'archived')
   }
 }
 

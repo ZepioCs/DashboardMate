@@ -87,9 +87,69 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2024-03-19',
+    title: 'Major Update: Task Management & UI Overhaul',
+    summary:
+      'Comprehensive update introducing advanced scheduling, task archiving, enhanced task details, and performance improvements.',
+    changes: [
+      {
+        type: 'added',
+        title: 'Advanced Task Scheduling',
+        description:
+          'Introduced a powerful new scheduling system with drag-and-drop functionality and multiple sorting modes',
+        technical_details:
+          'Implemented using @dnd-kit/core for drag-and-drop, with support for both priority-based and custom ordering. Added automatic time adjustments within priority groups and manual time adjustment capabilities. Added ability to disabled and enable Sat/Sun columns. Enhanced with visual feedback during drag operations.',
+        affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      },
+      {
+        type: 'changed',
+        title: 'Schedule UI Overhaul',
+        description:
+          'Completely redesigned schedule interface with improved visual hierarchy and mobile responsiveness',
+        technical_details:
+          'Enhanced task cards with priority-based color coding, improved accessibility for drag interactions, and optimized grid layout for both desktop and mobile views. Added toggle between priority and custom sorting modes.',
+        affected_areas: [AreaType.UI]
+      },
+      {
+        type: 'added',
+        title: 'Task Archiving System',
+        description:
+          'Introduced an archiving system for completed tasks with both automatic and manual options',
+        technical_details:
+          'Implemented automatic archiving for tasks completed more than a week ago, added manual archive functionality with confirmation dialog, and created a dedicated archive view for reviewing archived tasks.',
+        affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      },
+      {
+        type: 'added',
+        title: 'Time Management Features',
+        description: 'Added smart time management with automatic and manual time adjustments',
+        technical_details:
+          'Implemented intelligent time slot management that maintains time order within priority groups while allowing manual overrides. Added visual indicators for drag targets and improved time slot allocation logic.',
+        affected_areas: [AreaType.TaskManagement]
+      },
+      {
+        type: 'added',
+        title: 'Enhanced Task Details',
+        description: 'Added comprehensive task overview with notes, subtasks, and timeline',
+        technical_details:
+          'Implemented detailed task view dialog showing task description, notes history, subtasks with completion status, and a complete timeline of task events. Added support for tags and improved the visual presentation of task metadata.',
+        affected_areas: [AreaType.UI, AreaType.TaskManagement]
+      },
+      {
+        type: 'changed',
+        title: 'Performance Optimizations',
+        description: 'Improved application performance and responsiveness',
+        technical_details:
+          'Optimized chart animations by reducing animation duration to 300ms. Enhanced state management for better UI responsiveness. Improved loading times for task lists and analytics views.',
+        affected_areas: [AreaType.Performance, AreaType.UI]
+      }
+    ]
+  },
+  {
     version: '1.2.0',
     date: '2025-03-10',
-    title: 'Search/Filter & Task Notes',
+    title: 'Advanced Task Management & Search',
     summary: 'This update introduces search and filter ability for tasks.',
     changes: [
       {

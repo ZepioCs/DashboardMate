@@ -13,7 +13,9 @@ import {
   Plus,
   HardDrive,
   Info,
-  History
+  History,
+  Calendar,
+  Settings as SettingsIcon
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useStore } from '../stores/StoreProvider'
@@ -23,6 +25,7 @@ import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
 import { Settings as SettingsType, UpdateInfo, AppInfo } from '../../../global_model'
 import { ChangelogDialog } from '../components/ChangelogDialog'
+import { observer } from 'mobx-react-lite'
 
 interface Settings {
   notifications: {
@@ -31,6 +34,9 @@ interface Settings {
   }
   ai: {
     autoCreate: boolean
+  }
+  schedule: {
+    showWeekends: boolean
   }
 }
 
@@ -42,7 +48,7 @@ const handleError = (error: unknown, context: string): string => {
   return 'An unexpected error occurred'
 }
 
-export function Settings(): JSX.Element {
+export const Settings = observer(function Settings(): JSX.Element {
   const { taskStore } = useStore()
   const { toast } = useToast()
   const [settings, setSettings] = useState<SettingsType>(() => ({
@@ -52,6 +58,9 @@ export function Settings(): JSX.Element {
     },
     ai: {
       autoCreate: false
+    },
+    schedule: {
+      showWeekends: true
     }
   }))
   const [todosFileExists, setTodosFileExists] = useState(false)
@@ -321,25 +330,56 @@ export function Settings(): JSX.Element {
 
   return (
     <div className="flex h-screen flex-col">
-      <header className="border-b bg-background/95 px-6 py-4">
-        <h1 className="text-2xl font-bold">Settings</h1>
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center gap-4 px-6">
+          <SettingsIcon className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <h1 className="text-lg font-semibold">Settings</h1>
+            <p className="text-sm text-muted-foreground">Manage your application preferences</p>
+          </div>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
         <div className="grid gap-4 p-6 md:grid-cols-2">
           <div className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Customize how DashboardMate looks</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="space-y-1">
+                  <CardTitle>Appearance</CardTitle>
+                  <CardDescription>Change the appearance of the app</CardDescription>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 mt-5">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Theme</Label>
                     <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
                   </div>
                   <ThemeToggle />
+                </div>
+
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <div>
+                        <Label htmlFor="showWeekends" className="hover:cursor-pointer">
+                          Show Weekends
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Display Saturday and Sunday columns in schedule view
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      id="showWeekends"
+                      checked={settings.schedule.showWeekends}
+                      onCheckedChange={(checked) =>
+                        updateSettings(['schedule', 'showWeekends'], checked)
+                      }
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -616,4 +656,4 @@ export function Settings(): JSX.Element {
       <ChangelogDialog open={showChangelog} onClose={() => setShowChangelog(false)} />
     </div>
   )
-}
+})

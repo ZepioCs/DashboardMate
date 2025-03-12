@@ -34,6 +34,9 @@ export interface Settings {
   ai: {
     autoCreate: boolean
   }
+  schedule: {
+    showWeekends: boolean
+  }
 }
 
 export interface UpdateInfo {

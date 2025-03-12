@@ -22,6 +22,9 @@ const DEFAULT_SETTINGS: Settings = {
   },
   ai: {
     autoCreate: false
+  },
+  schedule: {
+    showWeekends: true
   }
 }
 

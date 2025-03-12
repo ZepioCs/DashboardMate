@@ -20,6 +20,7 @@ import { Badge } from '../components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ScrollArea } from '../components/ui/scroll-area'
 import { Progress } from '../components/ui/progress'
+import { BarChart2 } from 'lucide-react'
 
 const COLORS = {
   light: ['#3498db', '#f1c40f', '#2ecc71', '#e74c3c', '#9b59b6'],
@@ -144,11 +145,17 @@ export const Analytics = observer(function Analytics(): JSX.Element {
 
   return (
     <div className="flex h-screen flex-col">
-      <header className="border-b bg-background/95 px-6 py-4">
-        <h1 className="text-2xl font-bold">Analytics</h1>
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center gap-4 px-6">
+          <BarChart2 className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <h1 className="text-lg font-semibold">Analytics</h1>
+            <p className="text-sm text-muted-foreground">Track your task completion and progress</p>
+          </div>
+        </div>
       </header>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
         <div className="grid gap-4 p-6">
           {/* Key Metrics */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -199,7 +206,7 @@ export const Analytics = observer(function Analytics(): JSX.Element {
           {/* Detailed Analytics */}
           <div className="grid gap-4">
             <Card>
-              <CardHeader className="pb-2">
+              <CardHeader>
                 <Tabs defaultValue="overview" className="w-full">
                   <div className="flex items-center justify-between">
                     <CardTitle>Task Analytics</CardTitle>
@@ -239,6 +246,7 @@ export const Analytics = observer(function Analytics(): JSX.Element {
                                     name="Created"
                                     stroke={isDark ? '#60a5fa' : '#3498db'}
                                     strokeWidth={2}
+                                    animationDuration={300}
                                   />
                                   <Line
                                     type="monotone"
@@ -246,6 +254,7 @@ export const Analytics = observer(function Analytics(): JSX.Element {
                                     name="Completed"
                                     stroke={isDark ? '#4ade80' : '#2ecc71'}
                                     strokeWidth={2}
+                                    animationDuration={300}
                                   />
                                 </LineChart>
                               </ResponsiveContainer>
@@ -270,6 +279,7 @@ export const Analytics = observer(function Analytics(): JSX.Element {
                                     cy="50%"
                                     outerRadius={80}
                                     label={(entry) => `${entry.name}: ${entry.value}`}
+                                    animationDuration={300}
                                   >
                                     {tasksByStatus.map((_, index) => (
                                       <Cell
@@ -354,6 +364,7 @@ export const Analytics = observer(function Analytics(): JSX.Element {
                                   cy="50%"
                                   outerRadius={80}
                                   label={(entry) => `${entry.name}: ${entry.value}`}
+                                  animationDuration={300}
                                 >
                                   {tasksByPriority.map((_, index) => (
                                     <Cell
