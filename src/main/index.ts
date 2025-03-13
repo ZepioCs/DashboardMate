@@ -23,6 +23,11 @@ function createWindow(): void {
     }
   })
 
+  // If in development mode, open the dev tools
+  if (is.dev) {
+    mainWindow.webContents.openDevTools()
+  }
+
   // Initialize auto-updater and file handlers
   initAutoUpdater(mainWindow)
   initFileHandlers(mainWindow)

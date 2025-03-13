@@ -78,19 +78,48 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             bun run build:win
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Build signed version
+            # Build signed version first
             bun run build:mac
-            mv dist/**.dmg dist/$(basename dist/**.dmg .dmg)_signed.dmg
+
+            # Find the main DMG file
+            DMG_FILE=$(find dist -name "*.dmg" -not -name "*unsigned*" -not -name "*signed*" | head -n 1)
+            BASE_NAME=$(basename "$DMG_FILE" .dmg)
+
+            # Rename all related signed files
+            for f in dist/$BASE_NAME.*; do
+              if [[ "$f" == *.dmg ]]; then
+                mv "$f" "dist/${BASE_NAME}-signed.dmg"
+              elif [[ "$f" == *.dmg.blockmap ]]; then
+                mv "$f" "dist/${BASE_NAME}-signed.dmg.blockmap"
+              fi
+            done
 
             # Build unsigned version
             export CSC_IDENTITY_AUTO_DISCOVERY=false
+
+            # Save the signed files directory with a better name
             mv dist dist-signed
             mkdir dist
-            bun run build:mac
-            mv dist/**.dmg dist/$(basename dist/**.dmg .dmg)_unsigned.dmg
 
-            # Move signed version back
-            mv dist-signed/**.dmg dist/
+            # Build unsigned version
+            bun run build:mac
+
+            # Find and rename the unsigned DMG files
+            DMG_FILE=$(find dist -name "*.dmg" | head -n 1)
+            BASE_NAME=$(basename "$DMG_FILE" .dmg)
+
+            # Rename all related unsigned files
+            for f in dist/$BASE_NAME.*; do
+              if [[ "$f" == *.dmg ]]; then
+                mv "$f" "dist/${BASE_NAME}-unsigned.dmg"
+              elif [[ "$f" == *.dmg.blockmap ]]; then
+                mv "$f" "dist/${BASE_NAME}-unsigned.dmg.blockmap"
+              fi
+            done
+
+            # Move signed files back to dist directory
+            cp -r dist-signed/* dist/
+            rm -rf dist-signed
           else
             bun run build:linux
           fi

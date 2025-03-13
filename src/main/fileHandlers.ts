@@ -5,6 +5,7 @@ import { homedir } from 'os'
 import log from 'electron-log'
 import { Settings } from '../global_model'
 import { app } from 'electron'
+import { migrateSettings, CURRENT_SETTINGS_VERSION } from './settingsMigration'
 
 const APP_DATA_PATH = join(homedir(), '.dashboardmate')
 const FILES = {
@@ -16,6 +17,7 @@ const FILES = {
 }
 
 const DEFAULT_SETTINGS: Settings = {
+  version: CURRENT_SETTINGS_VERSION,
   notifications: {
     push: false,
     email: false
@@ -25,6 +27,17 @@ const DEFAULT_SETTINGS: Settings = {
   },
   schedule: {
     showWeekends: true
+  }
+}
+
+async function backupCorruptedSettings(): Promise<void> {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const backupPath = join(FILES.backups, `settings-corrupted-${timestamp}.json`)
+    await fs.copyFile(FILES.settings, backupPath)
+    log.info('Backed up corrupted settings file to:', backupPath)
+  } catch (error) {
+    log.error('Failed to backup corrupted settings:', error)
   }
 }
 
@@ -78,6 +91,15 @@ export function initFileHandlers(mainWindow: Electron.BrowserWindow): void {
   ipcMain.handle('createFile', async (_event, type: 'todos' | 'settings') => {
     try {
       const filePath = FILES[type]
+      if (type === 'settings') {
+        // If settings file exists, back it up before overwriting
+        try {
+          await fs.access(filePath)
+          await backupCorruptedSettings()
+        } catch {
+          // File doesn't exist, no need to backup
+        }
+      }
       const defaultContent = type === 'todos' ? '[]' : JSON.stringify(DEFAULT_SETTINGS, null, 2)
       await fs.writeFile(filePath, defaultContent, 'utf-8')
     } catch (error) {
@@ -90,7 +112,24 @@ export function initFileHandlers(mainWindow: Electron.BrowserWindow): void {
   ipcMain.handle('loadSettings', async () => {
     try {
       const data = await fs.readFile(FILES.settings, 'utf-8')
-      return data
+
+      // Validate JSON structure
+      let settings: Settings
+      try {
+        settings = JSON.parse(data)
+      } catch (parseError) {
+        log.error('Failed to parse settings JSON:', parseError)
+        await backupCorruptedSettings()
+        throw parseError
+      }
+
+      // Apply migrations if needed
+      const migratedSettings = migrateSettings(settings)
+      if (migratedSettings !== settings) {
+        // Save migrated settings back to file
+        await fs.writeFile(FILES.settings, JSON.stringify(migratedSettings, null, 2), 'utf-8')
+      }
+      return JSON.stringify(migratedSettings)
     } catch (error) {
       log.error('Failed to load settings:', error)
       throw error

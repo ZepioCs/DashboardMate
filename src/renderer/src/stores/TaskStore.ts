@@ -115,11 +115,10 @@ export class TaskStore {
     if (task) {
       task.status = newStatus
       task.updatedAt = new Date().toISOString()
-      // Set completedAt when task is moved to done
       if (newStatus === 'done') {
         task.completedAt = new Date().toISOString()
       } else {
-        task.completedAt = undefined // Reset completedAt if moved out of done
+        task.completedAt = undefined
       }
       await this.saveTasks()
     }
@@ -136,6 +135,7 @@ export class TaskStore {
 
   async moveTask(id: string, newStatus: TaskStatus): Promise<void> {
     await this.updateTask(id, { status: newStatus })
+    await this.updateTaskStatus(id, newStatus)
   }
 
   async updateTaskOrder(tasks: Task[]): Promise<void> {

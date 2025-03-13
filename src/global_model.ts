@@ -27,6 +27,7 @@ export interface AppInfo {
 }
 
 export interface Settings {
+  version: string
   notifications: {
     push: boolean
     email: boolean
@@ -37,6 +38,12 @@ export interface Settings {
   schedule: {
     showWeekends: boolean
   }
+}
+
+export type SettingsVersion = {
+  major: number
+  minor: number
+  patch: number
 }
 
 export interface UpdateInfo {

@@ -10,19 +10,22 @@ import { ThemeProvider } from './components/theme-provider'
 import { Button } from './components/ui/button'
 import { AiChat } from './components/AiChat'
 import { useEffect } from 'react'
+import { SettingsCheck } from './components/SettingsCheck'
 
 // Create a root layout route
 function RootLayout(): JSX.Element {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <div className="flex min-h-screen bg-background text-foreground">
-        <Sidebar />
-        <div className="flex-1">
-          <Outlet />
+      <SettingsCheck>
+        <div className="flex min-h-screen bg-background text-foreground">
+          <Sidebar />
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <Toaster />
+          <AiChat />
         </div>
-        <Toaster />
-        <AiChat />
-      </div>
+      </SettingsCheck>
     </ThemeProvider>
   )
 }

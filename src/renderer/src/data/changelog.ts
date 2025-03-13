@@ -87,6 +87,23 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.3.1',
+    date: '2025-03-13',
+    title: 'Minor Update: Migration security',
+    summary: 'Migration security to keep the Settings file in sync with the app version',
+    changes: [
+      {
+        type: 'added',
+        title: 'Migration security',
+        description:
+          'Added migration security to keep the Settings file in sync with the app version',
+        technical_details:
+          'Added settingsMigration.ts to handle migrations and keep the Settings file in sync with the app version',
+        affected_areas: [AreaType.Settings]
+      }
+    ]
+  },
+  {
     version: '1.3.0',
     date: '2024-03-19',
     title: 'Major Update: Task Management & UI Overhaul',
