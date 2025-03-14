@@ -87,6 +87,50 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.5.0',
+    date: '2025-03-14',
+    title: 'Enhanced Task History & UI Improvements',
+    summary:
+      'Major update to Task History functionality with improved UI, filtering, and state management capabilities.',
+    changes: [
+      {
+        type: 'added',
+        title: 'Enhanced Task History Interface',
+        description:
+          'Completely redesigned Task History page with modern UI and comprehensive functionality',
+        technical_details:
+          'Implemented new Task History page with search, filters, sorting options, and visual timeline. Added status and priority filters, tooltips for actions, and improved state indicators.',
+        affected_areas: [AreaType.UI, AreaType.TaskManagement]
+      },
+      {
+        type: 'added',
+        title: 'Task History Management',
+        description:
+          'Added advanced history management features including reset and restore capabilities',
+        technical_details:
+          'Implemented TaskStore methods for resetting history and restoring to previous states. Added confirmation dialogs and proper state cleanup for all destructive actions.',
+        affected_areas: [AreaType.TaskManagement, AreaType.DataStorage]
+      },
+      {
+        type: 'fixed',
+        title: 'Dialog and Interaction Improvements',
+        description:
+          'Fixed issues with dialog closing and improved overall interaction reliability',
+        technical_details:
+          'Replaced AlertDialog with standard Dialog components for better reliability. Enhanced state management for dialogs and improved cleanup on dialog close.',
+        affected_areas: [AreaType.UI]
+      },
+      {
+        type: 'fixed',
+        title: 'Kanban Board Enhancements',
+        description: 'Improved Kanban board functionality and reliability',
+        technical_details:
+          'Fixed drag and drop behavior in Kanban board, improved task reordering within columns, and enhanced visual feedback during drag operations.',
+        affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      }
+    ]
+  },
+  {
     version: '1.4.0',
     date: '2025-03-14',
     title: 'Major Update: Notifications & Task Reminders',
