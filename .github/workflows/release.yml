@@ -33,6 +33,15 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Clear Bun cache
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            rm -rf "$LOCALAPPDATA/bun/install/cache"
+          else
+            rm -rf ~/.bun/install/cache
+          fi
+        shell: bash
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
