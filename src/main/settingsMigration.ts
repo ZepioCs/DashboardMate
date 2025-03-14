@@ -14,24 +14,6 @@ type Migration = {
 // Registry of all migrations
 const migrations: Migration[] = [
   {
-    version: '1.4.0',
-    migrate: (settings: Partial<Settings>): Settings => ({
-      ...settings,
-      version: '1.4.0',
-      notifications: {
-        push: settings.notifications?.push ?? false,
-        email: settings.notifications?.email ?? false,
-        defaultReminderTime: settings.notifications?.defaultReminderTime ?? 30
-      },
-      ai: {
-        autoCreate: settings.ai?.autoCreate ?? false
-      },
-      schedule: {
-        showWeekends: settings.schedule?.showWeekends ?? true
-      }
-    })
-  },
-  {
     version: '1.3.0',
     migrate: (settings: Partial<Settings>): Settings => ({
       ...settings,
@@ -48,60 +30,25 @@ const migrations: Migration[] = [
         showWeekends: settings.schedule?.showWeekends ?? true
       }
     })
+  },
+  {
+    version: '1.4.0',
+    migrate: (settings: Partial<Settings>): Settings => ({
+      ...settings,
+      version: '1.4.0',
+      notifications: {
+        push: settings.notifications?.push ?? false,
+        email: settings.notifications?.email ?? false,
+        defaultReminderTime: settings.notifications?.defaultReminderTime ?? 30
+      },
+      ai: {
+        autoCreate: settings.ai?.autoCreate ?? false
+      },
+      schedule: {
+        showWeekends: settings.schedule?.showWeekends ?? true
+      }
+    })
   }
-
-  // Example migration that removes old properties and adds new ones
-  // {
-  //   version: '1.4.0',
-  //   migrate: (settings: Settings): Settings => {
-  //     // Create new settings object without the properties we want to remove
-  //     const {
-  //       notifications: { email, ...notificationSettings },  // Remove email notifications
-  //       ai,                                                // Keep ai settings
-  //       schedule,                                          // Keep schedule settings
-  //       ...restSettings                                    // Keep other root settings
-  //     } = settings
-  //
-  //     // Return new settings object with removed properties and new ones
-  //     return {
-  //       ...restSettings,                    // Base settings
-  //       version: '1.4.0',                   // New version
-  //       notifications: {
-  //         ...notificationSettings,          // Keep other notification settings
-  //         desktop: true,                    // Add new notification type
-  //         sound: true                       // Add another new setting
-  //       },
-  //       ai,                                // Keep ai settings unchanged
-  //       schedule,                          // Keep schedule settings unchanged
-  //       theme: {                           // Add completely new feature
-  //         mode: 'system',
-  //         accent: 'blue'
-  //       }
-  //     }
-  //   }
-  // },
-  //
-  // Example of a more complex migration with data transformation
-  // {
-  //   version: '1.5.0',
-  //   migrate: (settings: Settings): Settings => {
-  //     // Example: Converting a simple boolean to an object with more options
-  //     const { ai: { autoCreate, ...restAi }, ...restSettings } = settings
-  //
-  //     return {
-  //       ...restSettings,
-  //       version: '1.5.0',
-  //       ai: {
-  //         ...restAi,
-  //         automation: {                    // Transform old boolean into detailed config
-  //           enabled: autoCreate ?? false,  // Use old autoCreate as default
-  //           frequency: 'daily',           // Add new sub-settings
-  //           maxItems: 5
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
 ]
 
 function validateMigrations(): void {
