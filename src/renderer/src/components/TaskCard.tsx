@@ -16,7 +16,6 @@ import { useStore } from '../stores/StoreProvider'
 import { Badge } from './ui/badge'
 import { useState, useCallback } from 'react'
 import { TaskDialog } from './TaskDialog'
-import DOMPurify from 'dompurify'
 
 interface TaskCardProps {
   task: Task
@@ -87,11 +86,7 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
               <div
                 className="mt-1 line-clamp-2 text-sm text-muted-foreground break-words [&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary/80"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(task.description, {
-                    ADD_ATTR: ['target', 'rel'],
-                    ALLOWED_TAGS: ['a', 'b', 'i', 'em', 'strong', 'p', 'br'],
-                    ALLOWED_ATTR: ['href', 'target', 'rel']
-                  })
+                  __html: task.description
                 }}
                 onClick={(e) => {
                   const target = e.target as HTMLElement
