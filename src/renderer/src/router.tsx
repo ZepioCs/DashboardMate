@@ -11,6 +11,7 @@ import { Button } from './components/ui/button'
 import { AiChat } from './components/AiChat'
 import { useEffect } from 'react'
 import { SettingsCheck } from './components/SettingsCheck'
+import { History } from './pages/History'
 
 // Create a root layout route
 function RootLayout(): JSX.Element {
@@ -88,13 +89,21 @@ const archiveRoute = new Route({
   component: Archive
 })
 
+// Create the history route
+const historyRoute = new Route({
+  getParentRoute: (): typeof rootRoute => rootRoute,
+  path: '/history',
+  component: History
+})
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
   settingsRoute,
   analyticsRoute,
   scheduleRoute,
-  archiveRoute
+  archiveRoute,
+  historyRoute
 ])
 
 // Create the router

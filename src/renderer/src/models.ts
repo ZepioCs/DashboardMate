@@ -16,6 +16,21 @@ export interface Subtask {
   updatedAt: string
 }
 
+export type TaskHistoryType =
+  | 'status_change'
+  | 'priority_change'
+  | 'due_date_change'
+  | 'description_change'
+  | 'title_change'
+
+export interface TaskHistory {
+  id: string
+  type: TaskHistoryType
+  timestamp: string
+  oldValue?: string
+  newValue: string
+}
+
 export interface Task {
   id: string
   title: string
@@ -31,4 +46,5 @@ export interface Task {
   notes: TaskNote[]
   tags?: string[]
   subtasks?: Subtask[]
+  history: TaskHistory[]
 }

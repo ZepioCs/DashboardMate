@@ -1,4 +1,4 @@
-import { Task, TaskNote, TaskStatus } from '../models'
+import { Task, TaskNote, TaskStatus, TaskHistory, TaskHistoryType } from '../models'
 import { makeAutoObservable } from 'mobx'
 import type { RootStore } from './RootStore'
 
@@ -42,7 +42,7 @@ export class TaskStore {
   }
 
   async addTask(
-    task: Omit<Task, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'notes'>
+    task: Omit<Task, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'notes' | 'history'>
   ): Promise<void> {
     const newTask: Task = {
       ...task,
@@ -50,10 +50,32 @@ export class TaskStore {
       status: 'todo',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      notes: []
+      notes: [],
+      history: [
+        {
+          id: crypto.randomUUID(),
+          type: 'status_change',
+          timestamp: new Date().toISOString(),
+          newValue: 'todo'
+        }
+      ]
     }
     this.tasks.push(newTask)
     await this.saveTasks()
+  }
+
+  private createHistoryEntry(
+    type: TaskHistoryType,
+    oldValue: string | undefined,
+    newValue: string
+  ): TaskHistory {
+    return {
+      id: crypto.randomUUID(),
+      type,
+      timestamp: new Date().toISOString(),
+      oldValue,
+      newValue
+    }
   }
 
   async updateTask(taskId: string, updates: Partial<Task>): Promise<void> {
@@ -62,20 +84,43 @@ export class TaskStore {
       if (taskIndex === -1) return
 
       const oldTask = this.tasks[taskIndex]
+      const historyEntries: TaskHistory[] = []
+
+      // Track changes
+      if (updates.title && updates.title !== oldTask.title) {
+        historyEntries.push(this.createHistoryEntry('title_change', oldTask.title, updates.title))
+      }
+      if (updates.description && updates.description !== oldTask.description) {
+        historyEntries.push(
+          this.createHistoryEntry('description_change', oldTask.description, updates.description)
+        )
+      }
+      if (updates.priority && updates.priority !== oldTask.priority) {
+        historyEntries.push(
+          this.createHistoryEntry('priority_change', oldTask.priority, updates.priority)
+        )
+      }
+      if (updates.status && updates.status !== oldTask.status) {
+        historyEntries.push(
+          this.createHistoryEntry('status_change', oldTask.status, updates.status)
+        )
+      }
+      if (updates.dueDate && updates.dueDate !== oldTask.dueDate) {
+        historyEntries.push(
+          this.createHistoryEntry('due_date_change', oldTask.dueDate, updates.dueDate)
+        )
+      }
+
       const updatedTask = {
         ...oldTask,
         ...updates,
-        updatedAt: new Date().toISOString()
-      }
-      this.tasks[taskIndex] = updatedTask
-
-      // Schedule notification if due date changed
-      if (updates.dueDate) {
-        this.scheduleNotification(updatedTask)
+        updatedAt: new Date().toISOString(),
+        history: [...(oldTask.history || []), ...historyEntries]
       }
 
-      // Send notification when task is completed
+      // Add completedAt if task is being marked as done
       if (updates.status === 'done' && oldTask.status !== 'done') {
+        updatedTask.completedAt = new Date().toISOString()
         // Clear notification timer when task is completed
         this.clearNotificationTimer(taskId)
 
@@ -86,7 +131,14 @@ export class TaskStore {
         )
       }
 
-      await window.api.saveTodos(JSON.stringify(this.tasks, null, 2))
+      this.tasks[taskIndex] = updatedTask
+
+      // Schedule notification if due date changed
+      if (updates.dueDate) {
+        this.scheduleNotification(updatedTask)
+      }
+
+      await this.saveTasks()
     } catch (error) {
       console.error('Failed to update task:', error)
       throw error
