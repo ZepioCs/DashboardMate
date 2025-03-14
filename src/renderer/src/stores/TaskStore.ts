@@ -1,4 +1,4 @@
-import { Task, TaskNote, TaskStatus, TaskHistory, TaskHistoryType } from '../models'
+import { Task, TaskNote, TaskStatus, TaskHistory, TaskHistoryType, TaskPriority } from '../models'
 import { makeAutoObservable } from 'mobx'
 import type { RootStore } from './RootStore'
 
@@ -361,5 +361,72 @@ export class TaskStore {
   dispose(): void {
     this.notificationTimers.forEach((timer) => clearTimeout(timer))
     this.notificationTimers.clear()
+  }
+
+  async resetTaskHistory(taskId: string): Promise<void> {
+    try {
+      const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
+      if (taskIndex === -1) return
+
+      // Keep only the initial history entry
+      const initialHistory = this.tasks[taskIndex].history[0]
+      this.tasks[taskIndex] = {
+        ...this.tasks[taskIndex],
+        history: [initialHistory],
+        updatedAt: new Date().toISOString()
+      }
+
+      await this.saveTasks()
+    } catch (error) {
+      console.error('Failed to reset task history:', error)
+      throw error
+    }
+  }
+
+  async restoreTaskToState(taskId: string, historyEntry: TaskHistory): Promise<void> {
+    try {
+      const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
+      if (taskIndex === -1) return
+
+      const task = this.tasks[taskIndex]
+      const entryIndex = task.history.findIndex((h) => h.id === historyEntry.id)
+      if (entryIndex === -1) return
+
+      // Get all history entries up to and including the selected entry
+      const newHistory = task.history.slice(0, entryIndex + 1)
+
+      // Apply the state from the history entry
+      const updates: Partial<Task> = {}
+      switch (historyEntry.type) {
+        case 'status_change':
+          updates.status = historyEntry.newValue as TaskStatus
+          break
+        case 'priority_change':
+          updates.priority = historyEntry.newValue as TaskPriority
+          break
+        case 'title_change':
+          updates.title = historyEntry.newValue
+          break
+        case 'description_change':
+          updates.description = historyEntry.newValue
+          break
+        case 'due_date_change':
+          updates.dueDate = historyEntry.newValue
+          break
+      }
+
+      // Update the task with the historical state and new history
+      this.tasks[taskIndex] = {
+        ...task,
+        ...updates,
+        history: newHistory,
+        updatedAt: new Date().toISOString()
+      }
+
+      await this.saveTasks()
+    } catch (error) {
+      console.error('Failed to restore task state:', error)
+      throw error
+    }
   }
 }

@@ -1,9 +1,16 @@
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../stores/StoreProvider'
 import { format } from 'date-fns'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { Task } from '../models'
-import { useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '../components/ui/dialog'
+import { Task, TaskHistory } from '../models'
+import { useState, useMemo } from 'react'
 import { Badge } from '../components/ui/badge'
 import { cn } from '../lib/utils'
 import { ScrollArea } from '../components/ui/scroll-area'
@@ -16,9 +23,30 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
+  Filter,
+  RotateCcw,
+  History as HistoryRestore
 } from 'lucide-react'
-import { Separator } from '../components/ui/separator'
+import { Input } from '../components/ui/input'
+import { Button } from '../components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '../components/ui/dropdown-menu'
+import { useToast } from '../components/ui/use-toast'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip'
 
 interface HistoryDialogProps {
   task: Task | null
@@ -124,6 +152,30 @@ const getHistoryLabel = (type: string): { label: string; icon: JSX.Element } => 
 }
 
 const HistoryDialog = ({ task, open, onClose }: HistoryDialogProps): JSX.Element | null => {
+  const { toast } = useToast()
+  const { taskStore } = useStore()
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
+  const [entryToRestore, setEntryToRestore] = useState<TaskHistory | null>(null)
+
+  const handleRestore = async (entry: TaskHistory): Promise<void> => {
+    try {
+      if (!task) return
+      await taskStore.restoreTaskToState(task.id, entry)
+      toast({
+        title: 'State Restored',
+        description: 'Task has been restored to the selected state.'
+      })
+      setRestoreDialogOpen(false)
+      setEntryToRestore(null)
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to restore task state.',
+        variant: 'destructive'
+      })
+    }
+  }
+
   if (!task) return null
 
   return (
@@ -160,15 +212,67 @@ const HistoryDialog = ({ task, open, onClose }: HistoryDialogProps): JSX.Element
                         'before:absolute before:left-6 before:top-[calc(100%)] before:h-4 before:w-px before:bg-border'
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="rounded-full border bg-background p-1 shrink-0">{icon}</div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-medium">{label}</h4>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {format(new Date(entry.timestamp), 'PPp')}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full border bg-background p-1 shrink-0">{icon}</div>
+                        <div className="min-w-0">
+                          <h4 className="font-medium">{label}</h4>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(entry.timestamp), 'PPp')}
+                          </div>
                         </div>
                       </div>
+                      <Dialog
+                        open={restoreDialogOpen && entryToRestore?.id === entry.id}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setRestoreDialogOpen(false)
+                            setEntryToRestore(null)
+                          }
+                        }}
+                      >
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  setEntryToRestore(entry)
+                                  setRestoreDialogOpen(true)
+                                }}
+                              >
+                                <HistoryRestore className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Restore Task State</DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to restore the task to this state? This will
+                              revert all changes made after this point.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setRestoreDialogOpen(false)
+                                setEntryToRestore(null)
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button onClick={() => entryToRestore && handleRestore(entryToRestore)}>
+                              Restore State
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
 
                     {isCompact ? (
@@ -214,109 +318,312 @@ const HistoryDialog = ({ task, open, onClose }: HistoryDialogProps): JSX.Element
 
 export const History = observer(function History(): JSX.Element {
   const { taskStore } = useStore()
+  const { toast } = useToast()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'todo' | 'inProgress' | 'done'>('all')
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all')
+  const [sortBy, setSortBy] = useState<'recent' | 'changes'>('recent')
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [taskToReset, setTaskToReset] = useState<string | null>(null)
 
-  // Get tasks that have history entries and sort by most recently updated
-  const tasksWithHistory = taskStore.tasks
-    .filter((task) => task.history && task.history.length > 0)
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  // Get tasks that have history entries and apply filters
+  const filteredTasks = useMemo(() => {
+    return taskStore.tasks
+      .filter((task) => task.history && task.history.length > 0)
+      .filter((task) => {
+        const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesStatus = statusFilter === 'all' || task.status === statusFilter
+        const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
+        return matchesSearch && matchesStatus && matchesPriority
+      })
+      .sort((a, b) => {
+        if (sortBy === 'recent') {
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        }
+        return b.history.length - a.history.length
+      })
+  }, [taskStore.tasks, searchQuery, statusFilter, priorityFilter, sortBy])
+
+  const handleResetHistory = async (taskId: string): Promise<void> => {
+    try {
+      await taskStore.resetTaskHistory(taskId)
+      toast({
+        title: 'History Reset',
+        description: 'Task history has been cleared successfully.'
+      })
+      setResetDialogOpen(false)
+      setTaskToReset(null)
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to reset task history.',
+        variant: 'destructive'
+      })
+    }
+  }
 
   return (
-    <div className="container max-w-5xl py-8 space-y-8">
-      <div className="flex items-center gap-4">
-        <div className="rounded-lg bg-primary/10 p-2">
-          <HistoryIcon className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Task History</h1>
-          <p className="text-muted-foreground">Track changes and updates to your tasks over time</p>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="grid gap-4">
-        {tasksWithHistory.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-12 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <HistoryIcon className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">No History Available</h3>
-            <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
-              When you make changes to your tasks, they&apos;ll be tracked and displayed here for
-              reference.
-            </p>
+    <div className="flex h-screen flex-col bg-background">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center px-6">
+          <div className="flex items-center gap-2">
+            <HistoryIcon className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-semibold">Task History</h1>
           </div>
-        ) : (
-          <div className="grid gap-4">
-            {tasksWithHistory.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => setSelectedTask(task)}
-                className={cn(
-                  'group relative rounded-lg border bg-card p-4 transition-all',
-                  'hover:bg-muted/50 hover:shadow-md cursor-pointer'
-                )}
+          <div className="ml-auto flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <Select
+                value={sortBy}
+                onValueChange={(value: 'recent' | 'changes') => setSortBy(value)}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium truncate">{task.title}</h3>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'shrink-0',
-                          task.status === 'todo' &&
-                            'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
-                          task.status === 'inProgress' &&
-                            'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
-                          task.status === 'done' &&
-                            'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300'
-                        )}
-                      >
-                        {task.status === 'todo' && 'To Do'}
-                        {task.status === 'inProgress' && 'In Progress'}
-                        {task.status === 'done' && 'Done'}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'capitalize',
-                          task.priority === 'low' &&
-                            'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
-                          task.priority === 'medium' &&
-                            'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
-                          task.priority === 'high' &&
-                            'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300'
-                        )}
-                      >
-                        {task.priority} priority
-                      </Badge>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <HistoryIcon className="h-3.5 w-3.5" />
-                        {task.history.length} changes
-                      </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" />
-                        Updated {format(new Date(task.updatedAt), 'PP')}
-                      </span>
-                      {task.status === 'done' && task.completedAt && (
-                        <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          Completed {format(new Date(task.completedAt), 'PP')}
-                        </span>
-                      )}
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="changes">Most Changes</SelectItem>
+                </SelectContent>
+              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="p-2">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Status</p>
+                        <Select
+                          value={statusFilter}
+                          onValueChange={(value: 'all' | 'todo' | 'inProgress' | 'done') =>
+                            setStatusFilter(value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Filter by status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="todo">To Do</SelectItem>
+                            <SelectItem value="inProgress">In Progress</SelectItem>
+                            <SelectItem value="done">Done</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Priority</p>
+                        <Select
+                          value={priorityFilter}
+                          onValueChange={(value: 'all' | 'low' | 'medium' | 'high') =>
+                            setPriorityFilter(value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Filter by priority" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                </div>
-              </div>
-            ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSearchQuery('')
+                      setStatusFilter('all')
+                      setPriorityFilter('all')
+                      setSortBy('recent')
+                    }}
+                  >
+                    Reset filters
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} with history
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            <div className="space-y-4">
+              {filteredTasks.length === 0 ? (
+                <div className="mt-16 rounded-lg border border-dashed p-12 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <HistoryIcon className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold">No History Available</h3>
+                  <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+                    {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all'
+                      ? 'No tasks match your current filters.'
+                      : "When you make changes to your tasks, they'll be tracked and displayed here for reference."}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {filteredTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={cn(
+                        'group relative rounded-xl border bg-card/50 p-6 transition-all',
+                        'hover:bg-muted/50 hover:shadow-md'
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2.5 min-w-0">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-medium truncate">{task.title}</h3>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'shrink-0 px-2.5 py-0.5 text-sm',
+                                task.status === 'todo' &&
+                                  'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
+                                task.status === 'inProgress' &&
+                                  'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
+                                task.status === 'done' &&
+                                  'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300'
+                              )}
+                            >
+                              {task.status === 'todo' && 'To Do'}
+                              {task.status === 'inProgress' && 'In Progress'}
+                              {task.status === 'done' && 'Done'}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 text-sm">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'capitalize px-2.5 py-0.5',
+                                task.priority === 'low' &&
+                                  'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
+                                task.priority === 'medium' &&
+                                  'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
+                                task.priority === 'high' &&
+                                  'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300'
+                              )}
+                            >
+                              {task.priority} priority
+                            </Badge>
+                            <span className="flex items-center gap-2 text-muted-foreground">
+                              <HistoryIcon className="h-4 w-4" />
+                              {task.history.length} changes
+                            </span>
+                            <span className="flex items-center gap-2 text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              Updated {format(new Date(task.updatedAt), 'PPp')}
+                            </span>
+                            {task.status === 'done' && task.completedAt && (
+                              <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                <CheckCircle2 className="h-4 w-4" />
+                                Completed {format(new Date(task.completedAt), 'PPp')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <TooltipProvider>
+                            <Dialog
+                              open={resetDialogOpen && taskToReset === task.id}
+                              onOpenChange={(open) => {
+                                if (!open) {
+                                  setResetDialogOpen(false)
+                                  setTaskToReset(null)
+                                }
+                              }}
+                            >
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setTaskToReset(task.id)
+                                      setResetDialogOpen(true)
+                                    }}
+                                  >
+                                    <RotateCcw className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Reset history</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Reset Task History</DialogTitle>
+                                  <DialogDescription>
+                                    Are you sure you want to reset the history for this task? This
+                                    action cannot be undone.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <DialogFooter>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setResetDialogOpen(false)
+                                      setTaskToReset(null)
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    onClick={() => taskToReset && handleResetHistory(taskToReset)}
+                                    variant="destructive"
+                                  >
+                                    Reset History
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => setSelectedTask(task)}
+                                >
+                                  <HistoryRestore className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>View history</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </ScrollArea>
+      </main>
 
       <HistoryDialog
         task={selectedTask}
