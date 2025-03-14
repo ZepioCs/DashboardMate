@@ -1,0 +1,1 @@
+export const CURRENT_SETTINGS_VERSION = '1.4.0'

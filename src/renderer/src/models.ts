@@ -23,6 +23,7 @@ export interface Task {
   priority: TaskPriority
   status: TaskStatus
   dueDate?: string
+  notificationTime?: number // minutes before due date to send notification
   createdAt: string
   updatedAt: string
   completedAt?: string

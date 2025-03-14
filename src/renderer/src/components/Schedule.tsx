@@ -32,7 +32,8 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { observer } from 'mobx-react-lite'
-import { Settings } from '../../../global_model'
+import { Settings } from '../../../shared/model'
+import { CURRENT_SETTINGS_VERSION } from '../../../shared/constants'
 
 interface SortableTaskItemProps {
   task: Task
@@ -115,7 +116,8 @@ function Schedule(): JSX.Element {
   const [settings, setSettings] = useState<Settings>({
     notifications: { push: false, email: false },
     ai: { autoCreate: false },
-    schedule: { showWeekends: true }
+    schedule: { showWeekends: true },
+    version: CURRENT_SETTINGS_VERSION
   })
 
   // Load settings

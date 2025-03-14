@@ -87,6 +87,48 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.4.0',
+    date: '2025-03-14',
+    title: 'Major Update: Notifications & Task Reminders',
+    summary:
+      'Comprehensive notification system implementation with customizable reminders and smart scheduling alerts.',
+    changes: [
+      {
+        type: 'added',
+        title: 'Notification System',
+        description:
+          'Introduced a complete notification system with customizable alerts for tasks and events',
+        technical_details:
+          "Implemented using Electron's native notifications with custom scheduling logic, notification queuing, and persistence. Added support for both system tray and in-app notifications.",
+        affected_areas: [AreaType.UI, AreaType.TaskManagement]
+      },
+      {
+        type: 'added',
+        title: 'Task Reminders',
+        description: 'Added configurable reminders for tasks with flexible timing options',
+        technical_details:
+          'Implemented reminder system with support for multiple reminder times per task, snooze functionality, and persistent notification preferences. Added background process for reliable notification delivery.',
+        affected_areas: [AreaType.TaskManagement, AreaType.Settings]
+      },
+      {
+        type: 'added',
+        title: 'Smart Scheduling Alerts',
+        description: 'Added intelligent alerts for schedule conflicts and upcoming deadlines',
+        technical_details:
+          'Implemented predictive scheduling alerts that warn about potential conflicts, overdue tasks, and upcoming deadlines. Added customizable alert thresholds and notification grouping.',
+        affected_areas: [AreaType.TaskManagement, AreaType.UI]
+      },
+      {
+        type: 'added',
+        title: 'Notification Preferences',
+        description: 'Added comprehensive notification settings with granular control',
+        technical_details:
+          'Added notification settings panel with controls for notification types, timing, sound, and display options. Implemented per-task notification override capabilities.',
+        affected_areas: [AreaType.Settings, AreaType.UI]
+      }
+    ]
+  },
+  {
     version: '1.3.1',
     date: '2025-03-13',
     title: 'Minor Update: Migration security',

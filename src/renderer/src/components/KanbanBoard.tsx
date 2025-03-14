@@ -14,7 +14,7 @@ import {
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useState, useCallback } from 'react'
 import { TaskCard } from './TaskCard'
-import { taskStore } from '../stores/TaskStore'
+import { useStore } from '../stores/StoreProvider'
 import { cn } from '../lib/utils'
 import { AddTaskDialog } from './AddTaskDialog'
 import { ScrollArea } from './ui/scroll-area'
@@ -39,6 +39,7 @@ const columns: { id: TaskStatus; title: string; color: string }[] = [
 ]
 
 export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
+  const { taskStore } = useStore()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [hoveredColumn, setHoveredColumn] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')

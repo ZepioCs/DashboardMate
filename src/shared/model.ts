@@ -31,6 +31,7 @@ export interface Settings {
   notifications: {
     push: boolean
     email: boolean
+    defaultReminderTime: number
   }
   ai: {
     autoCreate: boolean

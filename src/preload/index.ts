@@ -1,7 +1,7 @@
 console.log('Preload script is loading...')
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { AppInfo, FileAPI } from '../global_model'
+import { AppInfo, FileAPI } from '../shared/model'
 
 // Custom APIs for renderer
 const api: FileAPI = {

@@ -4,7 +4,6 @@ import { Label } from '../components/ui/label'
 import { Switch } from '../components/ui/switch'
 import {
   Bell,
-  Mail,
   Zap,
   FileJson,
   Import,
@@ -15,7 +14,8 @@ import {
   Info,
   History,
   Calendar,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Clock
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useStore } from '../stores/StoreProvider'
@@ -23,14 +23,23 @@ import { Button } from '../components/ui/button'
 import { useToast } from '../components/ui/use-toast'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
-import { Settings as SettingsType, UpdateInfo, AppInfo } from '../../../global_model'
+import { Settings as SettingsType, UpdateInfo, AppInfo } from '../../../shared/model'
+import { CURRENT_SETTINGS_VERSION } from '../../../shared/constants'
 import { ChangelogDialog } from '../components/ChangelogDialog'
 import { observer } from 'mobx-react-lite'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../components/ui/select'
 
 interface Settings {
   notifications: {
     push: boolean
     email: boolean
+    defaultReminderTime: number
   }
   ai: {
     autoCreate: boolean
@@ -51,10 +60,12 @@ const handleError = (error: unknown, context: string): string => {
 export const Settings = observer(function Settings(): JSX.Element {
   const { taskStore } = useStore()
   const { toast } = useToast()
-  const [settings, setSettings] = useState<SettingsType>(() => ({
+  const [settings, setSettings] = useState<SettingsType>({
+    version: CURRENT_SETTINGS_VERSION,
     notifications: {
       push: false,
-      email: false
+      email: false,
+      defaultReminderTime: 30
     },
     ai: {
       autoCreate: false
@@ -62,7 +73,7 @@ export const Settings = observer(function Settings(): JSX.Element {
     schedule: {
       showWeekends: true
     }
-  }))
+  })
   const [todosFileExists, setTodosFileExists] = useState(false)
   const [settingsFileExists, setSettingsFileExists] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
@@ -137,10 +148,13 @@ export const Settings = observer(function Settings(): JSX.Element {
     }
   }
 
-  const updateSettings = (path: string[], value: boolean): void => {
+  const updateSettings = <T extends boolean | number>(
+    path: (keyof SettingsType | string)[],
+    value: T
+  ): void => {
     setSettings((prev) => {
-      const newSettings = { ...prev }
-      let current = newSettings
+      const newSettings = structuredClone(prev)
+      let current = newSettings as SettingsType
       for (let i = 0; i < path.length - 1; i++) {
         current = current[path[i]]
       }
@@ -443,51 +457,81 @@ export const Settings = observer(function Settings(): JSX.Element {
             </Card>
 
             <Card>
-              <div className="relative">
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
-                  <p className="text-sm font-medium text-muted-foreground">Coming soon</p>
+              <CardHeader>
+                <CardTitle>Notifications</CardTitle>
+                <CardDescription>Manage your notification preferences</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    <div>
+                      <Label>Push Notifications</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Receive notifications for task updates
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.notifications.push}
+                    onCheckedChange={async (checked) => {
+                      if (checked) {
+                        const permission =
+                          await taskStore.rootStore.notificationService.requestPermission()
+                        if (permission === 'granted') {
+                          updateSettings(['notifications', 'push'], true)
+                          toast({
+                            title: 'Notifications enabled',
+                            description: 'You will now receive notifications for task updates.'
+                          })
+                        } else {
+                          toast({
+                            title: 'Notifications not available',
+                            description:
+                              permission === 'not-supported'
+                                ? 'Notifications are not supported on your system.'
+                                : 'Please enable notifications in your system settings.',
+                            variant: 'destructive'
+                          })
+                        }
+                      } else {
+                        updateSettings(['notifications', 'push'], false)
+                      }
+                    }}
+                  />
                 </div>
-                <CardHeader>
-                  <CardTitle>Notifications</CardTitle>
-                  <CardDescription>Manage your notification preferences</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4" />
-                      <div>
-                        <Label>Push Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receive notifications for task updates
-                        </p>
-                      </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <div>
+                      <Label>Default Reminder Time</Label>
+                      <p className="text-sm text-muted-foreground">
+                        When to send notifications before task due dates
+                      </p>
                     </div>
-                    <Switch
-                      checked={settings.notifications.push}
-                      onCheckedChange={(checked) =>
-                        updateSettings(['notifications', 'push'], checked)
-                      }
-                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      <div>
-                        <Label>Email Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Get daily/weekly task summaries
-                        </p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={settings.notifications.email}
-                      onCheckedChange={(checked) =>
-                        updateSettings(['notifications', 'email'], checked)
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </div>
+                  <Select
+                    value={settings.notifications.defaultReminderTime.toString()}
+                    onValueChange={(value) => {
+                      updateSettings(['notifications', 'defaultReminderTime'], parseInt(value, 10))
+                    }}
+                    disabled={!settings.notifications.push}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select reminder time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 minutes before</SelectItem>
+                      <SelectItem value="15">15 minutes before</SelectItem>
+                      <SelectItem value="30">30 minutes before</SelectItem>
+                      <SelectItem value="60">1 hour before</SelectItem>
+                      <SelectItem value="120">2 hours before</SelectItem>
+                      <SelectItem value="1440">1 day before</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
             </Card>
           </div>
 

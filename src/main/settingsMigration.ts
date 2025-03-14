@@ -1,26 +1,45 @@
-import { Settings, SettingsVersion } from '../global_model'
+import { Settings, SettingsVersion } from '../shared/model'
 import log from 'electron-log'
 import { app } from 'electron'
+import { CURRENT_SETTINGS_VERSION } from '../shared/constants'
 
-export const CURRENT_SETTINGS_VERSION = '1.3.0'
 export const INITIAL_VERSION = '1.2.0'
 export const APP_VERSION = app.getVersion()
 
-interface Migration {
+type Migration = {
   version: string
-  migrate: (settings: Settings) => Settings
+  migrate: (settings: Partial<Settings>) => Settings
 }
 
 // Registry of all migrations
 const migrations: Migration[] = [
   {
+    version: '1.4.0',
+    migrate: (settings: Partial<Settings>): Settings => ({
+      ...settings,
+      version: '1.4.0',
+      notifications: {
+        push: settings.notifications?.push ?? false,
+        email: settings.notifications?.email ?? false,
+        defaultReminderTime: settings.notifications?.defaultReminderTime ?? 30
+      },
+      ai: {
+        autoCreate: settings.ai?.autoCreate ?? false
+      },
+      schedule: {
+        showWeekends: settings.schedule?.showWeekends ?? true
+      }
+    })
+  },
+  {
     version: '1.3.0',
-    migrate: (settings: Settings): Settings => ({
+    migrate: (settings: Partial<Settings>): Settings => ({
       ...settings,
       version: '1.3.0',
       notifications: {
         push: settings.notifications?.push ?? false,
-        email: settings.notifications?.email ?? false
+        email: settings.notifications?.email ?? false,
+        defaultReminderTime: 30
       },
       ai: {
         autoCreate: settings.ai?.autoCreate ?? false
@@ -178,3 +197,5 @@ export function migrateSettings(settings: Settings): Settings {
     throw error
   }
 }
+
+export { CURRENT_SETTINGS_VERSION }

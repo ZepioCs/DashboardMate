@@ -1,18 +1,23 @@
 import { Task, TaskNote, TaskStatus } from '../models'
 import { makeAutoObservable } from 'mobx'
+import type { RootStore } from './RootStore'
 
 export class TaskStore {
+  rootStore: RootStore
   tasks: Task[] = []
   isLoading = true
+  private notificationTimers: Map<string, NodeJS.Timeout> = new Map()
 
-  constructor() {
+  constructor(rootStore: RootStore) {
+    this.rootStore = rootStore
     makeAutoObservable(this)
     this.loadTasks()
     this.setupAutoArchive()
   }
 
-  private async loadTasks(): Promise<void> {
+  async loadTasks(): Promise<void> {
     try {
+      this.isLoading = true
       const data = await window.api.loadTodos()
       const tasks = JSON.parse(data)
       // Ensure each task has a notes array
@@ -51,18 +56,40 @@ export class TaskStore {
     await this.saveTasks()
   }
 
-  async updateTask(
-    id: string,
-    updates: Partial<Omit<Task, 'id' | 'createdAt' | 'notes'>>
-  ): Promise<void> {
-    const taskIndex = this.tasks.findIndex((task) => task.id === id)
-    if (taskIndex !== -1) {
-      this.tasks[taskIndex] = {
-        ...this.tasks[taskIndex],
+  async updateTask(taskId: string, updates: Partial<Task>): Promise<void> {
+    try {
+      const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
+      if (taskIndex === -1) return
+
+      const oldTask = this.tasks[taskIndex]
+      const updatedTask = {
+        ...oldTask,
         ...updates,
         updatedAt: new Date().toISOString()
       }
-      await this.saveTasks()
+      this.tasks[taskIndex] = updatedTask
+
+      // Schedule notification if due date changed
+      if (updates.dueDate) {
+        this.scheduleNotification(updatedTask)
+      }
+
+      // Send notification when task is completed
+      if (updates.status === 'done' && oldTask.status !== 'done') {
+        // Clear notification timer when task is completed
+        this.clearNotificationTimer(taskId)
+
+        await this.rootStore.notificationService.notify(
+          'Task Completed! 🎉',
+          `"${updatedTask.title}" has been marked as complete.`,
+          'normal'
+        )
+      }
+
+      await window.api.saveTodos(JSON.stringify(this.tasks, null, 2))
+    } catch (error) {
+      console.error('Failed to update task:', error)
+      throw error
     }
   }
 
@@ -225,6 +252,62 @@ export class TaskStore {
   getArchivedTasks(): Task[] {
     return this.tasks.filter((task) => task.status === 'archived')
   }
-}
 
-export const taskStore = new TaskStore()
+  private async scheduleNotification(task: Task): Promise<void> {
+    // Clear existing timer if any
+    this.clearNotificationTimer(task.id)
+
+    if (!task.dueDate || task.status === 'done' || task.status === 'archived') {
+      return
+    }
+
+    try {
+      // Get settings
+      const settingsData = await window.api.loadSettings()
+      const settings = JSON.parse(settingsData)
+
+      if (!settings?.notifications?.push) {
+        return // Don't schedule if notifications are disabled
+      }
+
+      const defaultReminderTime = settings?.notifications?.defaultReminderTime ?? 30 // fallback to 30 minutes
+
+      const dueDate = new Date(task.dueDate)
+      const notificationTime = new Date(dueDate.getTime() - defaultReminderTime * 60 * 1000)
+      const now = new Date()
+
+      // Don't schedule if notification time is in the past
+      if (notificationTime <= now) {
+        return
+      }
+
+      // Schedule notification
+      const timer = setTimeout(async () => {
+        await this.rootStore.notificationService.notify(
+          'Task Due Soon! ⏰',
+          `"${task.title}" is due in ${defaultReminderTime} minute${defaultReminderTime !== 1 ? 's' : ''}.`,
+          'normal'
+        )
+        this.notificationTimers.delete(task.id)
+      }, notificationTime.getTime() - now.getTime())
+
+      this.notificationTimers.set(task.id, timer)
+    } catch (error) {
+      console.error('Failed to schedule notification:', error)
+    }
+  }
+
+  private clearNotificationTimer(taskId: string): void {
+    const timer = this.notificationTimers.get(taskId)
+    if (timer) {
+      clearTimeout(timer)
+      this.notificationTimers.delete(taskId)
+    }
+  }
+
+  // Clean up notification timers when component unmounts
+  dispose(): void {
+    this.notificationTimers.forEach((timer) => clearTimeout(timer))
+    this.notificationTimers.clear()
+  }
+}

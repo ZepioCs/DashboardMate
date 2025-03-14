@@ -12,13 +12,14 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Plus } from 'lucide-react'
-import { taskStore } from '../stores/TaskStore'
+import { useStore } from '../stores/StoreProvider'
 import { observer } from 'mobx-react-lite'
 import { cn } from '../lib/utils'
 import { DateTimePicker } from './ui/date-time-picker'
 import { TaskPriority } from '../models'
 
 export const AddTaskDialog = observer(function AddTaskDialog(): JSX.Element {
+  const { taskStore } = useStore()
   const [open, setOpen] = React.useState(false)
   const [title, setTitle] = React.useState('')
   const [description, setDescription] = React.useState('')
@@ -105,6 +106,7 @@ export const AddTaskDialog = observer(function AddTaskDialog(): JSX.Element {
             <Label>Due Date & Time</Label>
             <DateTimePicker date={dueDateTime} onSelect={setDueDateTime} />
           </div>
+
           <div className="flex justify-end gap-2">
             <DialogClose asChild>
               <Button type="button" variant="outline" onClick={resetForm}>

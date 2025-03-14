@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initAutoUpdater } from './update'
 import { initFileHandlers } from './fileHandlers'
+import { initNotificationHandler } from './notificationHandler'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -71,6 +72,8 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  initNotificationHandler()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

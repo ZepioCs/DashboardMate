@@ -3,7 +3,7 @@ import { promises as fs } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import log from 'electron-log'
-import { Settings } from '../global_model'
+import { Settings } from '../shared/model'
 import { app } from 'electron'
 import { migrateSettings, CURRENT_SETTINGS_VERSION } from './settingsMigration'
 
@@ -20,7 +20,8 @@ const DEFAULT_SETTINGS: Settings = {
   version: CURRENT_SETTINGS_VERSION,
   notifications: {
     push: false,
-    email: false
+    email: false,
+    defaultReminderTime: 30 // Default to 30 minutes before
   },
   ai: {
     autoCreate: false
