@@ -161,6 +161,7 @@ const HistoryDialog = ({ task, open, onClose }: HistoryDialogProps): JSX.Element
     try {
       if (!task) return
       await taskStore.restoreTaskToState(task.id, entry)
+      await taskStore.loadTasks()
       toast({
         title: 'State Restored',
         description: 'Task has been restored to the selected state.'
@@ -348,16 +349,21 @@ export const History = observer(function History(): JSX.Element {
   const handleResetHistory = async (taskId: string): Promise<void> => {
     try {
       await taskStore.resetTaskHistory(taskId)
-      toast({
-        title: 'History Reset',
-        description: 'Task history has been cleared successfully.'
-      })
+
+      // Close the dialog
       setResetDialogOpen(false)
       setTaskToReset(null)
+
+      // Show success toast
+      toast({
+        title: 'History Deleted',
+        description: 'Task history has been successfully deleted.'
+      })
     } catch (error) {
+      console.error('Failed to reset task history:', error)
       toast({
         title: 'Error',
-        description: 'Failed to reset task history.',
+        description: 'Failed to delete task history.',
         variant: 'destructive'
       })
     }
@@ -457,6 +463,28 @@ export const History = observer(function History(): JSX.Element {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={async () => {
+                      await taskStore.loadTasks()
+                      toast({
+                        title: 'Refreshed',
+                        description: 'Task history has been refreshed.'
+                      })
+                    }}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh history</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <div className="text-sm text-muted-foreground">
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} with history
             </div>
@@ -575,8 +603,8 @@ export const History = observer(function History(): JSX.Element {
                                 <DialogHeader>
                                   <DialogTitle>Reset Task History</DialogTitle>
                                   <DialogDescription>
-                                    Are you sure you want to reset the history for this task? This
-                                    action cannot be undone.
+                                    Are you sure you want to delete all history entries for this
+                                    task? This action cannot be undone.
                                   </DialogDescription>
                                 </DialogHeader>
                                 <DialogFooter>
@@ -593,7 +621,7 @@ export const History = observer(function History(): JSX.Element {
                                     onClick={() => taskToReset && handleResetHistory(taskToReset)}
                                     variant="destructive"
                                   >
-                                    Reset History
+                                    Delete History
                                   </Button>
                                 </DialogFooter>
                               </DialogContent>

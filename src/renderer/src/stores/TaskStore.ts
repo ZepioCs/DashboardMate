@@ -366,13 +366,18 @@ export class TaskStore {
   async resetTaskHistory(taskId: string): Promise<void> {
     try {
       const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
-      if (taskIndex === -1) return
+      if (taskIndex === -1) {
+        console.error('Task not found:', taskId)
+        return
+      }
 
-      // Keep only the initial history entry
-      const initialHistory = this.tasks[taskIndex].history[0]
+      // Create a new array reference to trigger MobX reactivity
+      this.tasks = [...this.tasks]
+
+      // Update the task with empty history
       this.tasks[taskIndex] = {
         ...this.tasks[taskIndex],
-        history: [initialHistory],
+        history: [],
         updatedAt: new Date().toISOString()
       }
 
