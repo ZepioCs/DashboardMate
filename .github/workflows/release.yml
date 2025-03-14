@@ -33,12 +33,18 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Configure Bun
+      - name: Pre-install Radix UI packages
+        env:
+          BUN_CONFIG_NETWORK_TIMEOUT: 300000
         run: |
-          bun pm config set registry https://registry.npmmirror.com
-          bun pm config set network-timeout 100000
+          echo "Pre-installing Radix UI packages..."
+          bun add @radix-ui/react-tooltip@1.0.7 @radix-ui/react-alert-dialog@1.1.6 @radix-ui/react-dialog@1.1.6 @radix-ui/react-dropdown-menu@2.1.6 @radix-ui/react-popover@1.1.6 @radix-ui/react-toast@1.2.6
+        shell: bash
 
       - name: Install dependencies (with retries)
+        env:
+          BUN_CONFIG_REGISTRY: https://registry.npmjs.org
+          BUN_CONFIG_NETWORK_TIMEOUT: 100000
         run: |
           max_attempts=3
           attempt=1
@@ -53,8 +59,8 @@ jobs:
               exit 1
             fi
             attempt=$((attempt + 1))
-            echo "Retrying in 5 seconds..."
-            sleep 5
+            echo "Retrying in 10 seconds..."
+            sleep 10
           done
         shell: bash
 
