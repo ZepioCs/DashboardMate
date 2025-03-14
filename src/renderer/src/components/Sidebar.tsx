@@ -1,4 +1,4 @@
-import { LayoutGrid, Settings, Menu, BarChart, Calendar, Archive } from 'lucide-react'
+import { LayoutGrid, Settings, Menu, BarChart, Calendar, Archive, History } from 'lucide-react'
 import { Link, useMatches } from '@tanstack/react-router'
 import { cn } from '../lib/utils'
 import { Button } from './ui/button'
@@ -91,6 +91,20 @@ export const Sidebar = observer(function Sidebar(): JSX.Element {
             <Link to="/archive">
               <Archive className="h-5 w-5" />
               {!isCollapsed && <span>Archive</span>}
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            className={cn(
+              'w-full justify-start gap-3 px-3 py-2',
+              isCollapsed && 'justify-center px-2',
+              currentPath === '/history' && 'bg-muted'
+            )}
+            asChild
+          >
+            <Link to="/history">
+              <History className="h-5 w-5" />
+              {!isCollapsed && <span>History</span>}
             </Link>
           </Button>
         </nav>

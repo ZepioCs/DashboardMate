@@ -114,7 +114,7 @@ function Schedule(): JSX.Element {
   const [customOrder, setCustomOrder] = useState<{ [key: string]: string[] }>({})
   const [manuallyAdjustedTimes, setManuallyAdjustedTimes] = useState(new Set<string>())
   const [settings, setSettings] = useState<Settings>({
-    notifications: { push: false, email: false },
+    notifications: { push: false, email: false, defaultReminderTime: 0 },
     ai: { autoCreate: false },
     schedule: { showWeekends: true },
     version: CURRENT_SETTINGS_VERSION

@@ -25,18 +25,39 @@ import {
   ListTodo,
   Timer,
   CheckCircle,
-  Archive
+  Archive,
+  History,
+  Link,
+  Copy,
+  ChevronDown,
+  ArrowRight
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { Task, TaskPriority, TaskNote } from '../models'
+import { Task, TaskPriority, TaskNote, TaskStatus } from '../models'
 import { Badge } from './ui/badge'
 import { cn } from '../lib/utils'
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
+import * as React from 'react'
 import { useStore } from '../stores/StoreProvider'
 import { DateTimePicker } from './ui/date-time-picker'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
 import { observer } from 'mobx-react-lite'
+import { ScrollArea } from './ui/scroll-area'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from './ui/dropdown-menu'
+
+const columns: { id: TaskStatus; title: string }[] = [
+  { id: 'todo', title: 'To Do' },
+  { id: 'inProgress', title: 'In Progress' },
+  { id: 'done', title: 'Done' }
+]
 
 interface TaskDialogProps {
   task: Task | undefined
@@ -66,6 +87,7 @@ export const TaskDialog = observer(function TaskDialog({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editingNoteContent, setEditingNoteContent] = useState('')
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null)
+  const [isLinksExpanded, setIsLinksExpanded] = useState(true)
 
   // Reset form state when task changes
   useEffect(() => {
@@ -243,6 +265,38 @@ export const TaskDialog = observer(function TaskDialog({
               )}
             </div>
             <div className="flex gap-2 shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    <ArrowRight className="h-3.5 w-3.5 mr-1" />
+                    Move to
+                    <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {columns.map((targetColumn) => {
+                    if (targetColumn.id !== task.status) {
+                      const StatusIcon = getStatusConfig(targetColumn.id).icon
+                      return (
+                        <DropdownMenuItem
+                          key={targetColumn.id}
+                          onClick={() => {
+                            taskStore.moveTask(task.id, targetColumn.id)
+                            toast({
+                              title: 'Task moved',
+                              description: `Task moved to ${targetColumn.title}`
+                            })
+                          }}
+                        >
+                          <StatusIcon className="h-4 w-4 mr-2" />
+                          {targetColumn.title}
+                        </DropdownMenuItem>
+                      )
+                    }
+                    return null
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
               {!isEditing && (
                 <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}>
                   <span className="sr-only">Edit task</span>
@@ -262,7 +316,7 @@ export const TaskDialog = observer(function TaskDialog({
                 </Button>
               )}
               <DialogClose asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button variant="outline" size="icon" className="h-9 w-9">
                   <X className="h-4 w-4" />
                 </Button>
               </DialogClose>
@@ -306,7 +360,7 @@ export const TaskDialog = observer(function TaskDialog({
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Enter task description..."
                       className={cn(
-                        'min-h-[200px] h-[200px] w-full resize-none p-4 text-sm focus-visible:outline-none',
+                        'min-h-[200px] max-h-[400px] w-full resize-y p-4 text-sm focus-visible:outline-none',
                         'bg-transparent',
                         'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30 scrollbar-thumb-rounded-md'
                       )}
@@ -370,14 +424,109 @@ export const TaskDialog = observer(function TaskDialog({
                     <div
                       className={cn(
                         'text-sm whitespace-pre-wrap break-words',
-                        'h-[200px] overflow-y-auto',
+                        'max-h-[150px] overflow-y-auto',
                         'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30 scrollbar-thumb-rounded-md'
                       )}
                     >
-                      {task.description || 'No description provided'}
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        {task.description || 'No description provided'}
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Links Section */}
+                <Collapsible
+                  open={isLinksExpanded}
+                  onOpenChange={setIsLinksExpanded}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <Link className="h-4 w-4" />
+                      Links
+                    </div>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent">
+                        <ChevronDown
+                          className={cn(
+                            'h-5 w-5 text-muted-foreground transition-transform duration-200',
+                            isLinksExpanded ? 'rotate-180' : ''
+                          )}
+                        />
+                        <span className="sr-only">Toggle links</span>
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent className="space-y-2">
+                    <div className="rounded-lg border bg-card/50 divide-y divide-border">
+                      <ScrollArea className="max-h-[250px]">
+                        {task.description ? (
+                          ((): JSX.Element | JSX.Element[] => {
+                            const urlRegex = /(https?:\/\/[^\s]+)/g
+                            const matches = task.description.match(urlRegex)
+
+                            if (!matches) {
+                              return (
+                                <div className="p-3 text-sm text-muted-foreground">
+                                  No links found in description
+                                </div>
+                              )
+                            }
+
+                            return matches.map((url, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 group hover:bg-muted/50 gap-2"
+                              >
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-primary hover:underline truncate min-w-[200px] max-w-[300px] block"
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          window.open(url, '_blank')
+                                        }}
+                                      >
+                                        {url}
+                                      </a>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{url}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 shrink-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    navigator.clipboard.writeText(url)
+                                    toast({
+                                      title: 'Link copied',
+                                      description: 'The link has been copied to your clipboard.'
+                                    })
+                                  }}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))
+                          })()
+                        ) : (
+                          <div className="p-3 text-sm text-muted-foreground">
+                            No description available
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
 
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Task Details</h4>
@@ -422,11 +571,25 @@ export const TaskDialog = observer(function TaskDialog({
                     </div>
                   </div>
                 </div>
+
+                {/* Task History Section - Simplified */}
+                {task.history &&
+                  task.history.some((entry) => entry.type === 'description_change') && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <History className="h-4 w-4" />
+                        Recent Changes
+                      </h4>
+                      <div className="rounded-lg border bg-card/50 p-2 text-sm text-muted-foreground">
+                        Description was recently modified
+                      </div>
+                    </div>
+                  )}
               </>
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="flex flex-col h-full space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium">Notes & Updates</h4>
               <span className="text-sm text-muted-foreground">{notes.length} notes</span>
@@ -442,7 +605,7 @@ export const TaskDialog = observer(function TaskDialog({
                 Add Note
               </Button>
             </form>
-            <div className="h-[400px] rounded-md border p-4 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
+            <div className="flex-1 rounded-md border p-4 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
               <div className="space-y-4">
                 {notes.length === 0 ? (
                   <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">

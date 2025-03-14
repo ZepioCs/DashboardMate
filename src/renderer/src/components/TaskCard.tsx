@@ -16,6 +16,7 @@ import { useStore } from '../stores/StoreProvider'
 import { Badge } from './ui/badge'
 import { useState, useCallback } from 'react'
 import { TaskDialog } from './TaskDialog'
+import DOMPurify from 'dompurify'
 
 interface TaskCardProps {
   task: Task
@@ -73,42 +74,75 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
         ref={setNodeRef}
         style={style}
         className={cn(
-          'group relative flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md dark:bg-card/50',
-          isDragging && 'opacity-50'
+          'group relative flex flex-col gap-2 rounded-lg border bg-card p-3 shadow-sm transition-all hover:shadow-md dark:bg-card/50',
+          'max-w-full w-full',
+          isDragging && 'opacity-50 ring-2 ring-primary'
         )}
         onClick={handleCardClick}
       >
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <h3 className="font-medium leading-none">{task.title}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-medium leading-tight truncate">{task.title}</h3>
             {task.description && (
               <div
-                className="line-clamp-2 text-sm text-muted-foreground [&_ul]:ml-4 [&_ul]:list-disc [&_ol]:ml-4 [&_ol]:list-decimal"
-                dangerouslySetInnerHTML={{ __html: task.description }}
+                className="mt-1 line-clamp-2 text-sm text-muted-foreground break-words [&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary/80"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(task.description, {
+                    ADD_ATTR: ['target', 'rel'],
+                    ALLOWED_TAGS: ['a', 'b', 'i', 'em', 'strong', 'p', 'br'],
+                    ALLOWED_ATTR: ['href', 'target', 'rel']
+                  })
+                }}
+                onClick={(e) => {
+                  const target = e.target as HTMLElement
+                  if (target.tagName === 'A') {
+                    e.stopPropagation()
+                    const href = target.getAttribute('href')
+                    if (href) {
+                      window.open(href, '_blank')
+                    }
+                  }
+                }}
               />
             )}
-            <Badge
-              variant="outline"
-              className={cn(
-                'capitalize',
-                task.priority === 'low' &&
-                  'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
-                task.priority === 'medium' &&
-                  'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
-                task.priority === 'high' &&
-                  'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300'
-              )}
-            >
-              {task.priority}
-            </Badge>
+            <div className="flex flex-wrap items-center gap-2 mt-2 max-w-full">
+              <Badge
+                variant="outline"
+                className={cn(
+                  'capitalize text-xs',
+                  task.priority === 'low' &&
+                    'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
+                  task.priority === 'medium' &&
+                    'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
+                  task.priority === 'high' &&
+                    'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300'
+                )}
+              >
+                {task.priority}
+              </Badge>
+              <div className="flex items-center gap-2 flex-wrap">
+                {task.dueDate && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    {format(new Date(task.dueDate), 'MMM d')}
+                  </span>
+                )}
+                {task.status === 'done' && task.completedAt && (
+                  <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Completed {format(new Date(task.completedAt), 'MMM d')}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 items-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
+                  className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -135,33 +169,16 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
             </button>
           </div>
         </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {task.dueDate && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                {format(new Date(task.dueDate), 'MMM d')}
-              </span>
-            )}
-            {task.status === 'done' && task.completedAt && (
-              <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                <CheckCircle2 className="h-3 w-3" />
-                Completed {format(new Date(task.completedAt), 'MMM d')}
-              </span>
-            )}
-          </div>
-          {isNewTask && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={handleDeleteTask}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        {isNewTask && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-2 right-2 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+            onClick={handleDeleteTask}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <TaskDialog task={task} open={isDialogOpen} onClose={handleDialogClose} />
     </>
