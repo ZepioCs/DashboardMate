@@ -33,35 +33,26 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Pre-install Radix UI packages
-        env:
-          BUN_CONFIG_NETWORK_TIMEOUT: 300000
+      - name: Install dependencies with fallback
         run: |
-          echo "Pre-installing Radix UI packages..."
-          bun add @radix-ui/react-tooltip@1.0.7 @radix-ui/react-alert-dialog@1.1.6 @radix-ui/react-dialog@1.1.6 @radix-ui/react-dropdown-menu@2.1.6 @radix-ui/react-popover@1.1.6 @radix-ui/react-toast@1.2.6
-        shell: bash
-
-      - name: Install dependencies (with retries)
-        env:
-          BUN_CONFIG_REGISTRY: https://registry.npmjs.org
-          BUN_CONFIG_NETWORK_TIMEOUT: 100000
-        run: |
-          max_attempts=3
-          attempt=1
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt of $max_attempts"
-            if bun install --frozen-lockfile; then
-              echo "Installation successful"
-              break
-            fi
-            if [ $attempt -eq $max_attempts ]; then
-              echo "All attempts failed"
+          echo "Attempting installation with Bun..."
+          if bun install --frozen-lockfile; then
+            echo "Bun installation successful"
+            echo "package_manager=bun" >> $GITHUB_ENV
+          else
+            echo "Bun installation failed, falling back to npm..."
+            # Clean up any partial bun installs
+            rm -rf node_modules
+            # Use npm instead
+            npm install
+            if [ $? -eq 0 ]; then
+              echo "npm installation successful"
+              echo "package_manager=npm" >> $GITHUB_ENV
+            else
+              echo "Both Bun and npm installations failed"
               exit 1
             fi
-            attempt=$((attempt + 1))
-            echo "Retrying in 10 seconds..."
-            sleep 10
-          done
+          fi
         shell: bash
 
       # Install required dependencies for Linux builds
@@ -104,11 +95,23 @@ jobs:
           SKIP_NOTARIZE: ${{ secrets.SKIP_NOTARIZE }}
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            bun run build:win
+            if [ "$package_manager" = "bun" ]; then
+              bun run build:win
+            else
+              npm run build:win
+            fi
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            bun run build:mac
+            if [ "$package_manager" = "bun" ]; then
+              bun run build:mac
+            else
+              npm run build:mac
+            fi
           else
-            bun run build:linux
+            if [ "$package_manager" = "bun" ]; then
+              bun run build:linux
+            else
+              npm run build:linux
+            fi
           fi
         shell: bash
 
