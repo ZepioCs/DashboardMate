@@ -136,49 +136,49 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
               </div>
             </div>
           </div>
-          <div className="flex gap-1 items-start">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                {statusOptions.map((status) => (
-                  <DropdownMenuItem
-                    key={status.value}
-                    onClick={() => handleStatusChange(status.value)}
-                  >
-                    Move to {status.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <button
-              className="cursor-grab active:cursor-grabbing"
-              {...attributes}
-              {...listeners}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-            </button>
-          </div>
         </div>
-        {isNewTask && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-2 right-2 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-            onClick={handleDeleteTask}
+        <div className="absolute right-3 top-3 flex items-center gap-1">
+          {isNewTask && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+              onClick={handleDeleteTask}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              {statusOptions.map((status) => (
+                <DropdownMenuItem
+                  key={status.value}
+                  onClick={() => handleStatusChange(status.value)}
+                >
+                  Move to {status.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <button
+            className="cursor-grab active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
           >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
+            <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+          </button>
+        </div>
       </div>
       <TaskDialog task={task} open={isDialogOpen} onClose={handleDialogClose} />
     </>

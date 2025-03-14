@@ -17,7 +17,6 @@ import { TaskCard } from './TaskCard'
 import { useStore } from '../stores/StoreProvider'
 import { cn } from '../lib/utils'
 import { AddTaskDialog } from './AddTaskDialog'
-import { ScrollArea } from './ui/scroll-area'
 import { Task, TaskStatus, TaskPriority } from '../models'
 import { closestCorners } from '@dnd-kit/core'
 import { Input } from './ui/input'
@@ -307,7 +306,7 @@ export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
                       'flex flex-col rounded-lg border bg-card/50 shadow-sm dark:bg-muted/50',
                       'border-t-4',
                       column.color,
-                      (hoveredColumn === column.id || isOver) && 'ring-2 ring-primary/20'
+                      (hoveredColumn === column.id || isOver) && 'ring-2 ring-primary'
                     )}
                   >
                     <div ref={setNodeRef} className="flex flex-col flex-1 min-h-0">
@@ -357,7 +356,14 @@ export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
                           </div>
                         </div>
                       </div>
-                      <ScrollArea className="flex-1 p-4">
+                      <div
+                        className={cn(
+                          'flex-1 min-h-0 p-3 overflow-y-auto',
+                          'scrollbar-thin scrollbar-track-transparent',
+                          'scrollbar-thumb-muted-foreground/10 hover:scrollbar-thumb-muted-foreground/20',
+                          'scrollbar-thumb-rounded-full'
+                        )}
+                      >
                         <div className="space-y-3">
                           <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
                             {tasks.length > 0 ? (
@@ -371,7 +377,7 @@ export const KanbanBoard = observer(function KanbanBoard(): JSX.Element {
                             )}
                           </SortableContext>
                         </div>
-                      </ScrollArea>
+                      </div>
                     </div>
                   </div>
                 )
