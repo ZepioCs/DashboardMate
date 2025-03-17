@@ -94,6 +94,15 @@ export const changelog: ChangelogEntry[] = [
       'Major update to Task History functionality with improved UI, filtering, and state management capabilities.',
     changes: [
       {
+        type: 'changed',
+        title: 'TaskCard background adjustment',
+        description:
+          'Changed the button background to be a box, with a blury background to make it more visible',
+        technical_details:
+          'Used bg-background/80 and backdrop-blur-sm to make the buttons more visible and more readable.',
+        affected_areas: [AreaType.UI]
+      },
+      {
         type: 'added',
         title: 'Enhanced Task History Interface',
         description:

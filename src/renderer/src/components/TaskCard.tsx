@@ -133,11 +133,12 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
           </div>
         </div>
         <div className="absolute right-3 top-3 flex items-center gap-1">
+          <div className="absolute -inset-2 rounded bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
           {isNewTask && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+              className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 relative z-10"
               onClick={handleDeleteTask}
             >
               <Trash2 className="h-4 w-4" />
@@ -148,7 +149,7 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 relative z-10"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="h-4 w-4" />
@@ -166,7 +167,7 @@ export const TaskCard = observer(function TaskCard({ task }: TaskCardProps): JSX
             </DropdownMenuContent>
           </DropdownMenu>
           <button
-            className="cursor-grab active:cursor-grabbing"
+            className="cursor-grab active:cursor-grabbing relative z-10"
             {...attributes}
             {...listeners}
             onClick={(e) => e.stopPropagation()}
